@@ -38,6 +38,10 @@ $( function() {
 		event.preventDefault();
 		$editorIframe = $( '#content_ifr' );
 		$editorTextArea = $( '.wp-editor-area' );
+		$( 'html, body' ).animate( {
+			scrollTop: $( '#poststuff' ).position().top
+		}, 800 );
+		focusEditor();
 		writingTime = parseInt( $writingTimeField.val() );
 		wordCountGoal = parseInt( $wordGoalField.val() );
 		$overseerBox.addClass( 'bash-it-out__overseer-active' );
@@ -69,6 +73,29 @@ $( function() {
 
 	function isVisualEditorEnabled() {
 		return ( typeof tinyMCE !== 'undefined' ) && tinyMCE.activeEditor && ! tinyMCE.activeEditor.isHidden() ? true : false;
+	}
+
+	function focusEditor() {
+		var isVisualEditor = isVisualEditorEnabled();
+		var $element = isVisualEditor ? $editorIframe.contents().find( 'body' ) : $editorTextArea;
+		$element.focus();
+
+		// for some reason I can't set the cursor in the visual editor (yet!)
+		if ( ! isVisualEditor ) {
+			setTimeout( function() {
+				$element[ 0 ].selectionStart = $element[ 0 ].selectionEnd = getCharCount() + 1;
+			}, 0 );
+		}
+	}
+
+	function getCharCount() {
+		var text = '';
+		if ( isVisualEditorEnabled() ) {
+			text = $editorIframe.contents().find( 'body' ).text();
+		} else {
+			text = $editorTextArea.val();
+		}
+		return text === '' ? 0 : text.length;
 	}
 
 	function getWordCount() {
