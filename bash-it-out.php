@@ -27,7 +27,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 class Plugin {
-	const VERSION = '1.0';
+	const PLUGIN_VERSION = '1.0';
+	const PLUGIN_NAME = 'Bash It Out';
 	static $gutenberg_error_message;
 
 	/**
@@ -68,30 +69,26 @@ class Plugin {
 		add_action( 'admin_footer-post.php', array( $this, 'render_overseer' ) );
 		add_action( 'admin_footer-post-new.php', array( $this, 'render_overseer' ) );
 		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_clientside_assets' ) );
+		add_action( 'admin_menu', array( $this, 'register_admin_menu' ), 10, 3 );
 	}
 
-	public function add_custom_meta_box( $post_type, $post ) {
-		add_meta_box(
-			'bash-it-out-meta-box',
-			'Bash it out',
-			array( $this, 'render_meta_box' ),
-			null,
-			'normal',
-			'high'
-		);
+	public function register_admin_menu() {
+		add_menu_page( static::PLUGIN_NAME, static::PLUGIN_NAME, 'manage_options', 'bash-it-out-editor', array( $this, 'render_admin_page' ), '
+dashicons-book-alt', 3 );
 	}
 
 	public static function enqueue_clientside_assets() {
-		wp_enqueue_script( 'bash-it-out', plugin_dir_url( __FILE__ ) . '/assets/js/bash-it-out.js', array( 'jquery' ), '1.0', true );
-		wp_enqueue_style( 'bash-it-out', plugin_dir_url( __FILE__ ) . '/assets/css/bash-it-out.css', null, '1.0', 'all' );
+		wp_enqueue_script( 'bash-it-out-js', plugin_dir_url( __FILE__ ) . '/assets/js/bash-it-out.js', array( 'jquery' ), '1.0', true );
+		wp_enqueue_style( 'bash-it-out-css', plugin_dir_url( __FILE__ ) . '/assets/css/bash-it-out.css', null, '1.0', 'all' );
+		$js_variables = array(
+			'PLUGIN_NAME' => static::PLUGIN_NAME,
+			'PLUGIN_VERSION' => static::PLUGIN_VERSION,
+		);
+		wp_localize_script( 'bash-it-out-js', 'bashItOut', $js_variables );
 	}
 
-	public function render_meta_box() {
-		include_once __DIR__ . '/templates/meta-box.php';
-	}
-
-	public function render_overseer() {
-		include_once __DIR__ . '/templates/overseer.php';
+	public function render_admin_page() {
+		include_once __DIR__ . '/templates/admin-page.php';
 	}
 
 	public static function activate_plugin() {
