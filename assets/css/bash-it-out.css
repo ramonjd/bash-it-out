@@ -1,3 +1,13 @@
+.bash-it-out__container {
+	margin:	20px 40px;
+}
+
+.bash-it-out__settings {
+	margin-bottom: 40px;
+	padding: 20px;
+	border: 1px solid #ccc;
+}
+
 .bash-it-out__overseer {
 	background: gold;
 	position: fixed;
@@ -8,10 +18,14 @@
 	z-index: 100;
 }
 
+.bash-it-out__overseer-complete {
+	background: lightgreen;
+}
+
 .bash-it-out__overseer-active {
 	bottom: 0;
 }
 
-.bash-it-out__meta-box {
+.bash-it-out__editor {
 
 }

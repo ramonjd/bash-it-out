@@ -29,14 +29,16 @@ if ( ! defined( 'ABSPATH' ) ) {
 class Plugin {
 	const PLUGIN_VERSION = '1.0';
 	const PLUGIN_NAME = 'Bash It Out';
-	static $gutenberg_error_message;
-
+	const PLUGIN_SLUG = 'bash-it-out';
+	const WINDOW_NAMESPACE = 'bashItOut';
 	/**
 	 * Init
 	 */
 	public static function init() {
+		if ( ! is_admin() ) {
+			exit;
+		}
 		return static::get_instance();
-
 	}
 
 	/**
@@ -55,21 +57,24 @@ class Plugin {
 	 * Get instance
 	 */
 	public function __construct() {
-		if ( is_admin() ) {
-			$this->add_hooks();
+		$this->add_hooks();
+		// get the tag id so we can assign new posts to it
+		$tag_data = get_term_by( 'name', static::PLUGIN_NAME, 'post_tag' );
+		if ( ! $tag_data ) {
+			$tag_data = wp_insert_term( static::PLUGIN_NAME, 'post_tag' );
 		}
-	}
-	// first stage is to only develop for tinymce
-	public static function is_plugin_compatible() {
-		return is_plugin_active( 'gutenberg/gutenberg.php' ) === false;
+		$this->tag_id = $tag_data->term_id;
 	}
 
 	private function add_hooks() {
-		add_action( 'add_meta_boxes', array( $this, 'add_custom_meta_box' ), 10, 2 );
-		add_action( 'admin_footer-post.php', array( $this, 'render_overseer' ) );
-		add_action( 'admin_footer-post-new.php', array( $this, 'render_overseer' ) );
-		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_clientside_assets' ) );
+		add_action( 'current_screen', array( $this, 'check_current_screen' ) );
 		add_action( 'admin_menu', array( $this, 'register_admin_menu' ), 10, 3 );
+	}
+
+	public function check_current_screen( $current_screen ) {
+		if ( $current_screen->id === 'toplevel_page_bash-it-out-editor' ) {
+			add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_clientside_assets' ) );
+		}
 	}
 
 	public function register_admin_menu() {
@@ -77,14 +82,18 @@ class Plugin {
 dashicons-book-alt', 3 );
 	}
 
-	public static function enqueue_clientside_assets() {
+	public function enqueue_clientside_assets() {
 		wp_enqueue_script( 'bash-it-out-js', plugin_dir_url( __FILE__ ) . '/assets/js/bash-it-out.js', array( 'jquery' ), '1.0', true );
 		wp_enqueue_style( 'bash-it-out-css', plugin_dir_url( __FILE__ ) . '/assets/css/bash-it-out.css', null, '1.0', 'all' );
 		$js_variables = array(
-			'PLUGIN_NAME' => static::PLUGIN_NAME,
-			'PLUGIN_VERSION' => static::PLUGIN_VERSION,
+			'PLUGIN_NAME'       => static::PLUGIN_NAME,
+			'PLUGIN_VERSION'    => static::PLUGIN_VERSION,
+			'REST_URL'          => esc_url_raw( rest_url() ),
+			'PLUGIN_SLUG'       => static::PLUGIN_SLUG,
+			'TAG_ID'            => $this->tag_id,
+			'nonce'             => wp_create_nonce( 'wp_rest' ),
 		);
-		wp_localize_script( 'bash-it-out-js', 'bashItOut', $js_variables );
+		wp_localize_script( 'bash-it-out-js', static::WINDOW_NAMESPACE, $js_variables );
 	}
 
 	public function render_admin_page() {
@@ -92,19 +101,18 @@ dashicons-book-alt', 3 );
 	}
 
 	public static function activate_plugin() {
-		if ( ! static::is_plugin_compatible() ) {
-			wp_die(
-				'<p><strong>Bash It Out</strong> doesn\'t yet support the Gutenberg editor</p>',
-				'Plugin Activation Error',
-				array( 'response'=>200, 'back_link' => true )
-			);
-		}
+		// register custom post tag
+		wp_insert_term( static::PLUGIN_NAME, 'post_tag' );
+	}
+
+	public static function deactivate_plugin() {
 
 	}
 
-	public static function deactivate_plugin() {}
-
-	public static function uninstall_plugin() {}
+	public function uninstall_plugin() {
+		// remove custom post tag
+		wp_delete_term( static::PLUGIN_NAME, 'post_tag' );
+	}
 }
 
 add_action( 'plugins_loaded', array( 'Bash_It_Out\Plugin', 'init' ) );
