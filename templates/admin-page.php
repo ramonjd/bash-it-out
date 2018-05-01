@@ -27,7 +27,7 @@
 		<p>Hitting start will create a new draft post. Your work will be autosaved every 10s</p>
 	</div>
 
-	<div id="bash-it-out-editor" class="bash-it-out__editor">
+	<div class="bash-it-out__editor-container">
 		<?php
 			// see: https://developer.wordpress.org/reference/functions/wp_editor/
 			$content   = '';

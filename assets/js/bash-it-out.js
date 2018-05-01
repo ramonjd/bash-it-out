@@ -60,7 +60,8 @@
 		var $metaBoxFields = $writingTimeField.add( $wordGoalField, $reminderTypeField, $metaBoxStartButton );
 
 		// Editor
-		var $editorTextArea = $( '.bash-it-out__editor' );
+		var $editorTextArea = $( '#bash-it-out-editor' );
+		var $editorTextAreaContainer = $( '.bash-it-out__editor-container' );
 
 		// Background
 		var $backgroundShadow = $( '.bash-it-out__shadow-background' );
@@ -71,14 +72,14 @@
 		function onMetaBoxButtonClickHandler( event ) {
 			event.preventDefault();
 			$( 'html, body' ).animate( {
-				scrollTop: $editorTextArea.position().top
+				scrollTop: $editorTextAreaContainer.position().top
 			}, 800 );
 			focusEditor();
 			writingTime = parseInt( $writingTimeField.val() );
 			wordCountGoal = parseInt( $wordGoalField.val() );
 			autoSave = true;
 			createNewPost();
-			$editorTextArea.addClass( 'bash-it-out__editor-active' );
+			$editorTextAreaContainer.addClass( 'bash-it-out__editor-active' );
 			$overseerBox.addClass( 'bash-it-out__overseer-active' );
 			$backgroundShadow.addClass( 'bash-it-out__shadow-background-active' );
 			$overseerWordsRemaining.text( wordCountGoal - getWordCount() );
@@ -95,7 +96,7 @@
 		function onOverseerQuitClick() {
 			countDownTimer.stop();
 			$overseerBox.removeClass( 'bash-it-out__overseer-active bash-it-out__overseer-complete' );
-			$editorTextArea.removeClass( 'bash-it-out__editor-active' );
+			$editorTextAreaContainer.removeClass( 'bash-it-out__editor-active' );
 			$backgroundShadow.removeClass( 'bash-it-out__shadow-background-active' );
 			$metaBoxFields.attr( 'disabled', false );
 			autoSave = false;
@@ -216,11 +217,9 @@
 						countDownTimer.stop();
 						//TODO: show error
 					}
+					//TODO: abstract this
 					currentPostData = response;
-					$lastAutoSave.text( 'Last autosave: ' + response.modified )
-						.show()
-						.delay( 2500 )
-						.fadeOut();
+					$lastAutoSave.text( 'Autosaved at: ' + new Date( response.modified ).toLocaleTimeString() );
 
 					if ( autoSave === true ) {
 						triggerAutoSave();
@@ -269,15 +268,15 @@
 				},
 				success : function( response ) {
 					currentPostData = response;
-					// eslint-disable-next-line
-					console.log( 'updated', response );
-					$lastAutoSave.text( 'Last autosave: ' + response.modified )
-						.show()
-						.delay( 2500 )
-						.fadeOut();
+					//TODO: abstract this
+					$lastAutoSave.text( 'Autosaved at: ' + new Date( response.modified ).toLocaleTimeString() );
 					if ( autoSave === true ) {
 						triggerAutoSave();
 					}
+				},
+				error: function( error ) {
+					countDownTimer.stop();
+					//TODO: show error
 				}
 			} );
 		}

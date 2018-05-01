@@ -36,10 +36,9 @@ class Plugin {
 	 * Init
 	 */
 	public static function init() {
-		if ( ! is_admin() ) {
-			exit;
+		if ( is_admin() ) {
+			return static::get_instance();
 		}
-		return static::get_instance();
 	}
 
 	/**

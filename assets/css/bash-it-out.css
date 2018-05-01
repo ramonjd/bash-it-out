@@ -77,6 +77,12 @@
 	display: none;
 }
 
+.bash-it-out__paused .bash-it-out__overseer h3,
+.bash-it-out__paused .bash-it-out__overseer output,
+.bash-it-out__paused .bash-it-out__overseer time {
+	opacity: 0.5;
+}
+
 .bash-it-out__words-remaining,
 .bash-it-out__time-remaining {
 	display: block;
