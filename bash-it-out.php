@@ -1,7 +1,8 @@
 <?php
 /*
 	Plugin name: Bash it out
-	Plugin author: Ramon
+	Plugin author: ramonjd
+	Plugin URI: https://github.com/ramonjd/bash-it-out
 	Version: 1.0
 	Description: Forget about quality, form or style. Achieve your word count goals with this pressure timer.
 	License: GPL2

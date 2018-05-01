@@ -1,21 +1,30 @@
 .bash-it-out__container {
 	margin:	20px 40px;
+	box-sizing: border-box;
 }
 
+/*
+	Settings form
+*/
 .bash-it-out__settings {
 	margin-bottom: 40px;
 	padding: 20px;
 	border: 1px solid #ccc;
+	box-sizing: border-box;
 }
 
+/*
+	Overseer
+*/
 .bash-it-out__overseer {
 	background: gold;
-	position: fixed;
-	bottom: -1000%;
-	left: 0;
-	width: 100%;
-	height: 150px;
-	z-index: 100;
+	display: none;
+	z-index: 10003;
+	position: relative;
+	width: 90%;
+	left: auto;
+	padding: 15px;
+	box-sizing: border-box;
 }
 
 .bash-it-out__overseer-complete {
@@ -23,9 +32,87 @@
 }
 
 .bash-it-out__overseer-active {
-	bottom: 0;
+	display: block;
 }
 
-.bash-it-out__editor {
+.bash-it-out__overseer-container {
+	display: flex;
+	flex-wrap: nowrap;
+	justify-content: center;
+	text-align: center;
+}
 
+.bash-it-out__overseer-container h3 {
+	padding: 0;
+	margin: 0 0 15px 0;
+	font-size: 13px;
+}
+
+.bash-it-out__overseer-column {
+	flex-basis: 200px;
+}
+
+.bash-it-out__autosave {
+	text-align: left;
+	display: block;
+	font-style: italic;
+}
+
+.bash-it-out__overseer .bash-it-out__overseer-quit.button,
+.bash-it-out__overseer .bash-it-out__overseer-pause.button {
+	height: auto;
+	padding: 15px;
+	font-size: 16px;
+	min-width: 80px;
+	line-height: 1.3;
+}
+
+.bash-it-out__overseer .dashicons-controls-pause,
+.bash-it-out__paused .bash-it-out__overseer .dashicons-controls-play {
+	display: inline-block;
+}
+
+.bash-it-out__overseer .dashicons-controls-play,
+.bash-it-out__paused .bash-it-out__overseer .dashicons-controls-pause {
+	display: none;
+}
+
+.bash-it-out__words-remaining,
+.bash-it-out__time-remaining {
+	display: block;
+	font-style: italic;
+	font-weight: bold;
+	font-size: 28px;
+}
+
+/*
+	Editor
+*/
+.bash-it-out__editor {
+	display: block;
+}
+
+.bash-it-out__editor-active {
+	position: relative;
+	width: 90%;
+	z-index: 10002;
+	box-sizing: border-box;
+}
+
+/*
+	Background
+*/
+.bash-it-out__shadow-background {
+	display: none;
+}
+
+.bash-it-out__shadow-background-active {
+	display: block;
+	position: fixed;
+	width: 100%;
+	height: 100%;
+	top: 0;
+	left: 0;
+	z-index: 10001;
+	background: rgba( 0, 0, 0, 0.77 );
 }

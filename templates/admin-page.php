@@ -1,6 +1,12 @@
 <div class="bash-it-out__container">
-
-	<h1><?php echo get_admin_page_title(); ?></h1>
+	<h1>
+		<?php echo get_admin_page_title(); ?>
+	</h1>
+	<?php
+		if ( ! get_option( 'permalink_structure' ) ) {
+			echo get_admin_page_title() . ' uses the WP API, which requires you to enable <a href="https://codex.wordpress.org/Using_Permalinks">pretty permalinks</a>.';
+		}
+	?>
 	<div class="bash-it-out__settings">
 		<label class="bash-it-out__field-container" for="bash-it-out-writing-time">
 			<span>Writing time (mins)</span>
@@ -21,7 +27,7 @@
 		<p>Hitting start will create a new draft post. Your work will be autosaved every 10s</p>
 	</div>
 
-	<div id="bash-it-out__editor">
+	<div id="bash-it-out-editor" class="bash-it-out__editor">
 		<?php
 			// see: https://developer.wordpress.org/reference/functions/wp_editor/
 			$content   = '';
@@ -45,12 +51,31 @@
 	</div>
 
 	<div class="bash-it-out__overseer">
-		<h2>The Bash It Out Overseer</h2>
-		<p class="bash-it-out__autosave"></p>
-		<div>Time remaining: <time class="bash-it-out__time-remaining"></time></div>
-		<div>Words remaining: <output class="bash-it-out__words-remaining"></output></div>
-		<button type="button" class="bash-it-out__overseer-pause button button-primary button-large">Pause</button>
-		<button type="button" class="bash-it-out__overseer-quit button button-primary button-large">Quit</button>
+		<div class="bash-it-out__overseer-container">
+			<div class="bash-it-out__overseer-column">
+				<span class="bash-it-out__autosave"></span>
+			</div>
+			<div class="bash-it-out__overseer-column">
+				<h3>Time remaining</h3>
+				<time class="bash-it-out__time-remaining">--:--:--</time>
+			</div>
+			<div class="bash-it-out__overseer-column">
+				<h3>Words remaining</h3>
+				<output class="bash-it-out__words-remaining">-</output>
+			</div>
+			<div class="bash-it-out__overseer-column">
+				<button type="button" class="bash-it-out__overseer-pause button button-primary button-large">
+					<span class="dashicons dashicons-controls-pause"></span>
+					<span class="dashicons dashicons-controls-play hidden"></span>
+					<span class="bash-it-out__overseer-pause-text">Pause</span>
+				</button>
+			</div>
+			<div class="bash-it-out__overseer-column">
+				<button type="button" class="bash-it-out__overseer-quit button button-primary button-large">Quit</button>
+			</div>
+		</div>
 	</div>
 
+	<div class="bash-it-out__shadow-background"></div>
+	<input type="hidden" id="bash-it-out-identifier" name="bash-it-out-identifier" value="<?php echo get_admin_page_title(); ?>" />
 </div>

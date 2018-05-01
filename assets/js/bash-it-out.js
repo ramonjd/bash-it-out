@@ -15,8 +15,7 @@
 		}
 
 		// only run the script on the admin page
-		var $container = $( '.bash-it-out__container' );
-		if ( $container.length < 1 ) {
+		if ( ! isAdminPageActive() ) {
 			return;
 		}
 
@@ -40,11 +39,16 @@
 		/*
 			Elements
 		 */
+		var $container = $( '.bash-it-out__container' );
+
 		// Overseer
 		var $overseerBox = $( '.bash-it-out__overseer' );
 		var $overseerWordsRemaining = $( '.bash-it-out__words-remaining' );
 		var $overseerTimeRemaining = $( '.bash-it-out__time-remaining' );
 		var $overseerPauseButton = $( '.bash-it-out__overseer-pause' );
+		var $overseerPauseIcon = $overseerPauseButton.find( '.dashicons-controls-pause' );
+		var $overseerPlayIcon = $overseerPauseButton.find( '.dashicons-controls-play' );
+		var $overseerPauseButtonText = $( '.bash-it-out__overseer-pause-text' );
 		var $overseerQuitButton = $( '.bash-it-out__overseer-quit' );
 		var $lastAutoSave = $( '.bash-it-out__autosave' );
 
@@ -56,7 +60,10 @@
 		var $metaBoxFields = $writingTimeField.add( $wordGoalField, $reminderTypeField, $metaBoxStartButton );
 
 		// Editor
-		var $editorTextArea = $( '#bash-it-out-editor' );
+		var $editorTextArea = $( '.bash-it-out__editor' );
+
+		// Background
+		var $backgroundShadow = $( '.bash-it-out__shadow-background' );
 
 		/*
 			Event handlers
@@ -71,7 +78,9 @@
 			wordCountGoal = parseInt( $wordGoalField.val() );
 			autoSave = true;
 			createNewPost();
+			$editorTextArea.addClass( 'bash-it-out__editor-active' );
 			$overseerBox.addClass( 'bash-it-out__overseer-active' );
+			$backgroundShadow.addClass( 'bash-it-out__shadow-background-active' );
 			$overseerWordsRemaining.text( wordCountGoal - getWordCount() );
 			countDownTimer.set( parseInt( writingTime ) );
 			$overseerTimeRemaining.text( countDownTimer.getClock() );
@@ -86,6 +95,8 @@
 		function onOverseerQuitClick() {
 			countDownTimer.stop();
 			$overseerBox.removeClass( 'bash-it-out__overseer-active bash-it-out__overseer-complete' );
+			$editorTextArea.removeClass( 'bash-it-out__editor-active' );
+			$backgroundShadow.removeClass( 'bash-it-out__shadow-background-active' );
 			$metaBoxFields.attr( 'disabled', false );
 			autoSave = false;
 		}
@@ -97,9 +108,11 @@
 		function onOverseerPauseClick() {
 			var pausedState = countDownTimer.toggle();
 			if ( pausedState === true ) {
-				$overseerPauseButton.text( 'Resume' );
+				$overseerPauseButtonText.text( 'Resume' );
+				$container.addClass( 'bash-it-out__paused' );
 			} else {
-				$overseerPauseButton.text( 'Pause' );
+				$overseerPauseButtonText.text( 'Pause' );
+				$container.removeClass( 'bash-it-out__paused' );
 			}
 			autoSave = false;
 		}
@@ -120,8 +133,12 @@
 		 * @returns undefined
 		 */
 		function onCountdownTick( counterValues ) {
-			$overseerTimeRemaining.text( counterValues.clock );
-			$overseerWordsRemaining.text( wordCountGoal - getWordCount() );
+			if ( isAdminPageActive() ) {
+				$overseerTimeRemaining.text(counterValues.clock);
+				// eslint-disable-next-line
+				console.log('wordCountGoal - getWordCount(', wordCountGoal - getWordCount());
+				$overseerWordsRemaining.text(wordCountGoal - getWordCount());
+			}
 		}
 
 		/**
@@ -195,11 +212,23 @@
 					xhr.setRequestHeader( 'X-WP-Nonce', _bio.nonce );
 				},
 				success : function( response ) {
+					if ( ! response ) {
+						countDownTimer.stop();
+						//TODO: show error
+					}
 					currentPostData = response;
-					$lastAutoSave.text( 'Last autosave: ' + response.modified );
+					$lastAutoSave.text( 'Last autosave: ' + response.modified )
+						.show()
+						.delay( 2500 )
+						.fadeOut();
+
 					if ( autoSave === true ) {
 						triggerAutoSave();
 					}
+				},
+				error: function( error ) {
+					countDownTimer.stop();
+					//TODO: show error
 				}
 			} );
 		}
@@ -209,11 +238,13 @@
 		 * @returns {number} word count in editor textarea
 		 */
 		function triggerAutoSave() {
-			autoSaveTimeout = setTimeout( updatePost, autoSaveInterval );
+			if ( isAdminPageActive() ) {
+				autoSaveTimeout = setTimeout( updatePost, autoSaveInterval );
+			}
 		}
 
 		/**
-		 * Kicks off a timedout autosave
+		 * Stops autosave
 		 * @returns {number} word count in editor textarea
 		 */
 		function cancelAutoSave() {
@@ -240,12 +271,30 @@
 					currentPostData = response;
 					// eslint-disable-next-line
 					console.log( 'updated', response );
-					$lastAutoSave.text( 'Last autosave: ' + response.modified );
+					$lastAutoSave.text( 'Last autosave: ' + response.modified )
+						.show()
+						.delay( 2500 )
+						.fadeOut();
 					if ( autoSave === true ) {
 						triggerAutoSave();
 					}
 				}
 			} );
+		}
+
+		/**
+		 * Checks if we're on the admin page and cancels all timeouts if not
+		 * @returns {boolean} if we're on the page
+		 */
+		function isAdminPageActive() {
+			var $identifier = $( '#bash-it-out-identifier' );
+			if ( $identifier.length < 1 ) {
+				// We're no longer on the page Toto
+				cancelAutoSave();
+				countDownTimer && countDownTimer.stop();
+				return false;
+			}
+			return true;
 		}
 
 		/**
