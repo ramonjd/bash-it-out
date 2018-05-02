@@ -36,6 +36,7 @@
 		var autoSaveTimeout = null;
 		var autoSaveInterval = 10000;
 		var wordGoalReached = false;
+		var pressureTimeout = null;
 
 		/*
 			Elements
@@ -214,6 +215,11 @@
 				wordGoalReached = false;
 			}
 			return wordGoalReached;
+		}
+
+		function startPressureTimer() {
+			// when $reminderTypeField.val() is up, start nagging by colour/image/sound;
+			// increment by fading in colour/image each second after half-way into the pressure time
 		}
 
 		/**

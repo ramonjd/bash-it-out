@@ -3,15 +3,21 @@
 	box-sizing: border-box;
 }
 .bash-it-out__container.bash-it-out__paused {}
-.bash-it-out__container.bash-it-out__complete {}
+
 /*
 	Settings form
 */
 .bash-it-out__settings {
-	margin-bottom: 40px;
+	margin-bottom: 15px;
 	padding: 20px;
-	border: 1px solid #ccc;
+	border: 1px solid #aaa;
 	box-sizing: border-box;
+	background: #ccc;
+}
+
+.bash-it-out__settings p {
+	font-style: italic;
+	margin-bottom: 0;
 }
 
 /*

@@ -17,14 +17,15 @@
 			<input type="number" min="100" max="10000" step="100" value="100" name="bash-it-out-word-goal" id="bash-it-out-word-goal" />
 		</label>
 		<label class="bash-it-out__field-container" for="bash-it-out-reminder-type">
-			<span>Reminder type</span>
+			<span>Type of reminder:</span>
 			<select name="bash-it-out-reminder-type" id="bash-it-out-reminder-type">
-				<option value="1">Nice old lady</option>
-				<option value="2">Angry editor</option>
+				<option value="15000">Sleepy editor (15 secs before nagging)</option>
+				<option value="10000" selected>Friendly editor (10 secs before nagging)</option>
+				<option value="5000">Angry editor (5 secs before nagging)</option>
 			</select>
 		</label>
 		<button type="button" class="bash-it-out__start button button-primary button-large">Bash it out!</button>
-		<p>Hitting start will create a new draft post. Your work will be autosaved every 10s</p>
+		<p>Every time you bash one out, it creates a new draft post with the tag <strong><?php echo get_admin_page_title(); ?></strong>. Your work will be autosaved every 10 seconds.</p>
 	</div>
 
 	<div class="bash-it-out__editor-container">
