@@ -51,6 +51,7 @@
 	</div>
 
 	<div class="bash-it-out__overseer">
+		<progress  class="bash-it-out__progressbar" value="0" max="100">0%</progress>
 		<div class="bash-it-out__overseer-container">
 			<div class="bash-it-out__overseer-column">
 				<span class="bash-it-out__autosave"></span>

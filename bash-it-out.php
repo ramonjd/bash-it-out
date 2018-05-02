@@ -1,24 +1,22 @@
 <?php
-/*
-	Plugin name: Bash it out
-	Plugin author: ramonjd
-	Plugin URI: https://github.com/ramonjd/bash-it-out
-	Version: 1.0
-	Description: Forget about quality, form or style. Achieve your word count goals with this pressure timer.
-	License: GPL2
-
-	{Plugin Name} is free software: you can redistribute it and/or modify
-	it under the terms of the GNU General Public License as published by
-	the Free Software Foundation, either version 2 of the License, or
-	any later version.
-
-	{Plugin Name} is distributed in the hope that it will be useful,
-	but WITHOUT ANY WARRANTY; without even the implied warranty of
-	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-	GNU General Public License for more details.
-
-	You should have received a copy of the GNU General Public License
-	along with {Plugin Name}. If not, see {License URI}.
+/**
+ * Plugin Name
+ *
+ * @package     Bash_It_Out
+ * @author      Ramon
+ * @copyright   2018
+ * @license     GPL-2.0+
+ *
+ * @wordpress-plugin
+ * Plugin Name: Bash it out
+ * Plugin URI:  https://github.com/ramonjd/bash-it-out
+ * Description: Forget about quality, form or style. Achieve your word count goals with this pressure timer.
+ * Version:     1.0.0
+ * Author:      Ramon
+ * Author URI:  https://github.com/ramonjd/
+ * Text Domain: bash-it-out
+ * License:     GPL-2.0+
+ * License URI: http://www.gnu.org/licenses/gpl-2.0.txt
  */
 
 namespace Bash_It_Out;
@@ -36,9 +34,7 @@ class Plugin {
 	 * Init
 	 */
 	public static function init() {
-		if ( is_admin() ) {
-			return static::get_instance();
-		}
+		return static::get_instance();
 	}
 
 	/**
@@ -115,7 +111,10 @@ dashicons-book-alt', 3 );
 	}
 }
 
-add_action( 'plugins_loaded', array( 'Bash_It_Out\Plugin', 'init' ) );
+
+if ( is_admin() ) {
+	add_action( 'plugins_loaded', array( 'Bash_It_Out\Plugin', 'init' ) );
+}
 register_activation_hook( __FILE__, array( 'Bash_It_Out\Plugin', 'activate_plugin' ) );
 register_deactivation_hook( __FILE__, array( 'Bash_It_Out\Plugin', 'deactivate_plugin' ) );
 register_uninstall_hook( __FILE__, array( 'Bash_It_Out\Plugin', 'uninstall_plugin' ) );

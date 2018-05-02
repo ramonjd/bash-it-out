@@ -35,19 +35,19 @@
 		var autoSave = false;
 		var autoSaveTimeout = null;
 		var autoSaveInterval = 10000;
+		var wordGoalReached = false;
 
 		/*
 			Elements
 		 */
 		var $container = $( '.bash-it-out__container' );
+		var $backgroundShadow = $( '.bash-it-out__shadow-background' );
 
 		// Overseer
 		var $overseerBox = $( '.bash-it-out__overseer' );
 		var $overseerWordsRemaining = $( '.bash-it-out__words-remaining' );
 		var $overseerTimeRemaining = $( '.bash-it-out__time-remaining' );
 		var $overseerPauseButton = $( '.bash-it-out__overseer-pause' );
-		var $overseerPauseIcon = $overseerPauseButton.find( '.dashicons-controls-pause' );
-		var $overseerPlayIcon = $overseerPauseButton.find( '.dashicons-controls-play' );
 		var $overseerPauseButtonText = $( '.bash-it-out__overseer-pause-text' );
 		var $overseerQuitButton = $( '.bash-it-out__overseer-quit' );
 		var $lastAutoSave = $( '.bash-it-out__autosave' );
@@ -62,9 +62,7 @@
 		// Editor
 		var $editorTextArea = $( '#bash-it-out-editor' );
 		var $editorTextAreaContainer = $( '.bash-it-out__editor-container' );
-
-		// Background
-		var $backgroundShadow = $( '.bash-it-out__shadow-background' );
+		var $progressBar = $( '.bash-it-out__progressbar' );
 
 		/*
 			Event handlers
@@ -135,10 +133,11 @@
 		 */
 		function onCountdownTick( counterValues ) {
 			if ( isAdminPageActive() ) {
+				var wordCount = getWordCount();
 				$overseerTimeRemaining.text(counterValues.clock);
-				// eslint-disable-next-line
-				console.log('wordCountGoal - getWordCount(', wordCountGoal - getWordCount());
-				$overseerWordsRemaining.text(wordCountGoal - getWordCount());
+				$overseerWordsRemaining.text(wordCountGoal - wordCount);
+				checkStatusWordCountStatus( wordCount );
+				renderProgressBar( wordCount );
 			}
 		}
 
@@ -188,6 +187,33 @@
 				' ',
 				date.toLocaleTimeString()
 			].join('');
+		}
+
+		function onWordGoalCompleted() {
+			countDownTimer.stop();
+			autoSave = false;
+			$overseerWordsRemaining.text( 0 );
+			$container.addClass( 'bash-it-out__complete' );
+		}
+
+		function renderProgressBar( currentWordCount ) {
+			var progressValue = 100;
+			if ( currentWordCount < wordCountGoal ) {
+				progressValue = Math.floor( currentWordCount / wordCountGoal * 100);
+			}
+			$progressBar.val( progressValue );
+		}
+
+		function checkStatusWordCountStatus ( currentWordCount ) {
+			if ( currentWordCount >= wordCountGoal ) {
+				if ( wordGoalReached === false ) {
+					wordGoalReached = true;
+					onWordGoalCompleted();
+				}
+			} else {
+				wordGoalReached = false;
+			}
+			return wordGoalReached;
 		}
 
 		/**
@@ -432,6 +458,9 @@
 				reset: reset,
 				getClock: function() {
 					return clock;
+				},
+				isPaused: function() {
+					return paused;
 				}
 			};
 		}

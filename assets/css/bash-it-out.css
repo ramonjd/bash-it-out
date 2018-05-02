@@ -2,7 +2,8 @@
 	margin:	20px 40px;
 	box-sizing: border-box;
 }
-
+.bash-it-out__container.bash-it-out__paused {}
+.bash-it-out__container.bash-it-out__complete {}
 /*
 	Settings form
 */
@@ -23,11 +24,11 @@
 	position: relative;
 	width: 90%;
 	left: auto;
-	padding: 15px;
+	padding: 20px 15px;
 	box-sizing: border-box;
 }
 
-.bash-it-out__overseer-complete {
+.bash-it-out__complete .bash-it-out__overseer {
 	background: lightgreen;
 }
 
@@ -90,6 +91,15 @@
 	font-weight: bold;
 	font-size: 28px;
 }
+
+.bash-it-out__progressbar {
+	display: block;
+	position: absolute;
+	width: 100%;
+	left: 0;
+	top: 0;
+}
+
 
 /*
 	Editor
