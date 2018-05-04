@@ -25,9 +25,6 @@
 		var wordCountGoal = 0;
 		var writingTime = 0;
 		var countDownTimer = null;
-		var wordCountRegex = /[a-zA-Z0-9_\u0392-\u03c9\u0400-\u04FF]+|[\u4E00-\u9FFF\u3400-\u4dbf\uf900-\ufaff\u3040-\u309f\uac00-\ud7af\u0400-\u04FF]+|[\u00E4\u00C4\u00E5\u00C5\u00F6\u00D6]+|\w+/g;
-		// we'll use the WordPress word count util if we can find it
-		var wpWordCount = window.wp && window.wp.utils && window.wp.utils.WordCounter ? new window.wp.utils.WordCounter() : null;
 		var wpiApiUrls = {
 			post: 'wp/v2/posts',
 		};
@@ -96,9 +93,10 @@
 			countDownTimer.stop();
 			$overseerBox.removeClass( 'bash-it-out__overseer-active bash-it-out__overseer-complete' );
 			$editorTextAreaContainer.removeClass( 'bash-it-out__editor-active' );
-			$backgroundShadow.removeClass( 'bash-it-out__shadow-background-active' );
+			$backgroundShadow.removeClass( 'bash-it-out__shadow-background-active bash-it-out__shadow-background-annoy' );
 			$metaBoxFields.attr( 'disabled', false );
 			autoSave = false;
+			clearTimeout( pressureTimeout );
 		}
 
 		/**
@@ -110,6 +108,7 @@
 			if ( pausedState === true ) {
 				$overseerPauseButtonText.text( 'Resume' );
 				$container.addClass( 'bash-it-out__paused' );
+				clearTimeout( pressureTimeout );
 			} else {
 				$overseerPauseButtonText.text( 'Pause' );
 				$container.removeClass( 'bash-it-out__paused' );
@@ -124,6 +123,7 @@
 		 */
 		function onCountdownComplete() {
 			$overseerBox.addClass( 'bash-it-out__overseer-complete' );
+			clearTimeout( pressureTimeout );
 			autoSave = false;
 		}
 
@@ -140,6 +140,17 @@
 				checkStatusWordCountStatus( wordCount );
 				renderProgressBar( wordCount );
 			}
+		}
+
+		/**
+		 * Fires on keyup of the text editor so we can track bashing activity
+		 * @returns undefined
+		 */
+		function onEditorTextAreaKeyUp( event ) {
+			// TODO: easter egg track key strokes
+			clearTimeout( pressureTimeout );
+			$backgroundShadow.removeClass( 'bash-it-out__shadow-background-annoy' );
+			startPressureTimer();
 		}
 
 		/**
@@ -168,9 +179,7 @@
 		 */
 		function getWordCount() {
 			var text = $editorTextArea.val();
-			return wpWordCount
-				? wc.count( text )
-				: ( text.length > 0 ? text.match( wordCountRegex ).length : 0 );
+			return text.split(/\w+/).length - 1;
 		}
 
 		/**
@@ -220,6 +229,10 @@
 		function startPressureTimer() {
 			// when $reminderTypeField.val() is up, start nagging by colour/image/sound;
 			// increment by fading in colour/image each second after half-way into the pressure time
+			clearTimeout( pressureTimeout );
+			pressureTimeout = setTimeout( function() {
+				$backgroundShadow.addClass( 'bash-it-out__shadow-background-annoy' );
+			}, $reminderTypeField.val() );
 		}
 
 		/**
@@ -251,7 +264,7 @@
 					}
 					//TODO: abstract this
 					currentPostData = response;
-					$lastAutoSave.text( 'Autosaved at: ' + new Date( response.modified ).toLocaleTimeString() );
+					$lastAutoSave.html( '<a href="response.link">' + response.title.rendered + '</a> saved.' );
 
 					if ( autoSave === true ) {
 						triggerAutoSave();
@@ -270,6 +283,7 @@
 		 */
 		function triggerAutoSave() {
 			if ( isAdminPageActive() ) {
+				clearTimeout( autoSaveTimeout );
 				autoSaveTimeout = setTimeout( updatePost, autoSaveInterval );
 			}
 		}
@@ -286,6 +300,7 @@
 
 		/**
 		 * Updates current post
+		 * TODO: could we do this with https://developer.wordpress.org/plugins/javascript/heartbeat-api/ ?
 		 * @returns {jQuery.jqXHR} jQuery deferred object
 		 */
 		function updatePost() {
@@ -301,7 +316,7 @@
 				success : function( response ) {
 					currentPostData = response;
 					//TODO: abstract this
-					$lastAutoSave.text( 'Autosaved at: ' + new Date( response.modified ).toLocaleTimeString() );
+					$lastAutoSave.html( '<a href="response.link">' + response.title.rendered + '</a> autosaved at: ' + new Date( response.modified ).toLocaleTimeString() );
 					if ( autoSave === true ) {
 						triggerAutoSave();
 					}
@@ -482,13 +497,10 @@
 
 		$overseerQuitButton.on( 'click', onOverseerQuitClick );
 		$overseerPauseButton.on( 'click', onOverseerPauseClick );
+		$editorTextArea.on( 'keyup', onEditorTextAreaKeyUp );
 
 		countDownTimer = Countdown( onCountdownComplete, onCountdownTick );
 
-		// setup warnings
-		if ( ! wpWordCount ) {
-			log( 'The WordPress javascript library `wp.utils.WordCounter` couldn\'t be loaded. Using fallback.', 'warn' );
-		}
 
 	} );
 }( jQuery, window.bashItOut ) );

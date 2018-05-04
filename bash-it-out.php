@@ -104,8 +104,8 @@ class Plugin {
 	 * Load clientside assets and assign window variables
 	 */
 	public function enqueue_clientside_assets() {
-		wp_enqueue_script( 'bash-it-out-js', plugin_dir_url( __FILE__ ) . '/assets/js/bash-it-out.js', array( 'jquery' ), '1.0', true );
-		wp_enqueue_style( 'bash-it-out-css', plugin_dir_url( __FILE__ ) . '/assets/css/bash-it-out.css', null, '1.0', 'all' );
+		wp_enqueue_script( 'bash-it-out-js', plugin_dir_url( __FILE__ ) . 'assets/js/bash-it-out.js', array( 'jquery' ), '1.0', true );
+		wp_enqueue_style( 'bash-it-out-css', plugin_dir_url( __FILE__ ) . 'assets/css/bash-it-out.css', null, '1.0', 'all' );
 		$js_variables = array(
 			'PLUGIN_NAME'    => static::PLUGIN_NAME,
 			'PLUGIN_VERSION' => static::PLUGIN_VERSION,

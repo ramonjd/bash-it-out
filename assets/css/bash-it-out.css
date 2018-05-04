@@ -15,9 +15,38 @@
 	background: #ccc;
 }
 
+.bash-it-out__settings fieldset {
+	display: block;
+}
+
 .bash-it-out__settings p {
-	font-style: italic;
-	margin-bottom: 0;
+	margin: 0;
+}
+
+.bash-it-out__tooltip {
+	position: relative;
+	display: inline-block;
+}
+
+.bash-it-out__tooltip-content {
+	position: absolute;
+	width: 200px;
+	margin: 0;
+	padding: 10px;
+	background: #fff;
+	border: #aaa;
+	display: none;
+	line-height: 1;
+	font-family: inherit;
+}
+
+.bash-it-out__settings .bash-it-out__tooltip:hover .bash-it-out__tooltip-content,
+.bash-it-out__settings .bash-it-out__tooltip:focus .bash-it-out__tooltip-content {
+	display: block;
+}
+
+.bash-it-out__start {
+
 }
 
 /*
@@ -136,5 +165,22 @@
 	top: 0;
 	left: 0;
 	z-index: 10001;
-	background: rgba( 0, 0, 0, 0.77 );
+	background-color: rgba( 0, 0, 0, 0.77 );
+}
+
+.bash-it-out__shadow-background-annoy {
+	animation-name: annoy_me;
+	animation-duration: 2s;
+	animation-iteration-count: infinite;
+	animation-direction: alternate;
+	animation-timing-function: ease-in-out;
+}
+
+@keyframes annoy_me {
+	from {
+		background-color: rgba( 0, 0, 0, 0.77 );
+	}
+	to {
+		background-color: rgba( 255, 10, 39, 0.77 );
+	}
 }

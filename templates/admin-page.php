@@ -2,30 +2,42 @@
 	<h1>
 		<?php echo get_admin_page_title(); ?>
 	</h1>
+	<p>Can't reach your word count goals? Does writer's block have its craggy hand around the throat of your creativity? Sometimes just bashing something out is the answer. Set your word count goal below, along with a time limit and let your fingers fly. Your editor will remind you should you falter. Happy writing!</p>
+	<p>Every time you bash one out, it creates a new draft post with the tag <strong><?php echo get_admin_page_title(); ?></strong>. Your work will be autosaved every 10 seconds.</p>
+
 	<?php
 		if ( ! get_option( 'permalink_structure' ) ) {
 			echo get_admin_page_title() . ' uses the WP API, which requires you to enable <a href="https://codex.wordpress.org/Using_Permalinks">pretty permalinks</a>.';
 		}
 	?>
 	<div class="bash-it-out__settings">
-		<label class="bash-it-out__field-container" for="bash-it-out-writing-time">
-			<span>Writing time (mins)</span>
-			<input type="number" min="10" max="1000" step="10" value="30" name="bash-it-out-writing-time" id="bash-it-out-writing-time" />
-		</label>
-		<label class="bash-it-out__field-container" for="bash-it-out-word-goal">
-			<span>Word goal</span>
-			<input type="number" min="100" max="10000" step="100" value="100" name="bash-it-out-word-goal" id="bash-it-out-word-goal" />
-		</label>
-		<label class="bash-it-out__field-container" for="bash-it-out-reminder-type">
-			<span>Type of reminder:</span>
-			<select name="bash-it-out-reminder-type" id="bash-it-out-reminder-type">
-				<option value="15000">Sleepy editor (15 secs before nagging)</option>
-				<option value="10000" selected>Friendly editor (10 secs before nagging)</option>
-				<option value="5000">Angry editor (5 secs before nagging)</option>
-			</select>
-		</label>
-		<button type="button" class="bash-it-out__start button button-primary button-large">Bash it out!</button>
-		<p>Every time you bash one out, it creates a new draft post with the tag <strong><?php echo get_admin_page_title(); ?></strong>. Your work will be autosaved every 10 seconds.</p>
+		<fieldset>
+			<label class="bash-it-out__field-container" for="bash-it-out-writing-time">
+				<span>Writing time (mins)</span>
+				<input type="number" min="10" max="1000" step="10" value="30" name="bash-it-out-writing-time" id="bash-it-out-writing-time" />
+			</label>
+			<label class="bash-it-out__field-container" for="bash-it-out-word-goal">
+				<span>Word goal</span>
+				<span class="bash-it-out__tooltip">
+				<span class="dashicons dashicons-editor-help"></span>
+				<span class="bash-it-out__tooltip-content">Words are all numbers and letters with one or more characters.</span>
+			</span>
+				<input type="number" min="100" max="10000" step="100" value="100" name="bash-it-out-word-goal" id="bash-it-out-word-goal" />
+			</label>
+			<label class="bash-it-out__field-container" for="bash-it-out-reminder-type">
+				<span>Type of reminder:</span>
+				<span class="bash-it-out__tooltip">
+				<span class="dashicons dashicons-editor-help"></span>
+				<span class="bash-it-out__tooltip-content">Set the time before your editor reminds you to keep bashing it out.</span>
+			</span>
+				<select name="bash-it-out-reminder-type" id="bash-it-out-reminder-type">
+					<option value="15000">Sleepy editor (15 secs before nagging)</option>
+					<option value="10000" selected>Friendly editor (10 secs before nagging)</option>
+					<option value="5000">Angry editor (5 secs before nagging)</option>
+				</select>
+			</label>
+			<button type="button" class="bash-it-out__start button button-primary button-large">Bash it out!</button>
+		</fieldset>
 	</div>
 
 	<div class="bash-it-out__editor-container">
@@ -76,6 +88,7 @@
 				<button type="button" class="bash-it-out__overseer-quit button button-primary button-large">Quit</button>
 			</div>
 		</div>
+		<div class="bash-it-out__editors"><!--Editors go here--></div>
 	</div>
 
 	<div class="bash-it-out__shadow-background"></div>
