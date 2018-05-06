@@ -17,4 +17,3 @@ https://developer.wordpress.org/rest-api/
 - [ ] custom icon
 - [ ] format autosave timestamp
 - [ ] WordPress version check (min 4.7)
-- [ ] Update rest_url for permalinks? /?rest_route=/wp-json/wp/v2/posts

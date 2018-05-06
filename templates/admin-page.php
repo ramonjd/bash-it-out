@@ -4,39 +4,59 @@
 	</h1>
 	<p>Can't reach your word count goals? Does writer's block have its craggy hand around the throat of your creativity? Sometimes just bashing something out is the answer. Set your word count goal below, along with a time limit and let your fingers fly. Your editor will remind you should you falter. Happy writing!</p>
 	<p>Every time you bash one out, it creates a new draft post with the tag <strong><?php echo get_admin_page_title(); ?></strong>. Your work will be autosaved every 10 seconds.</p>
-
-	<?php
-		if ( ! get_option( 'permalink_structure' ) ) {
-			echo get_admin_page_title() . ' uses the WP API, which requires you to enable <a href="https://codex.wordpress.org/Using_Permalinks">pretty permalinks</a>.';
-		}
-	?>
 	<div class="bash-it-out__settings">
+		<?php
+			if ( method_exists('Bash_It_Out\Plugin', 'get_saved_posts' ) ) {
+				$bash_it_out_posts = Bash_It_Out\Plugin::get_saved_posts();
+				if ( $bash_it_out_posts ) {
+				?>
+		<fieldset>
+			<label class="bash-it-out__field-container" for="bash-it-out-saved-posts">
+				<span class="bash-it-out__label-text bash-it-out__label-group">Load a previously bashed-out post (doesn't work yet :) )</span>
+			</label>
+			<select name="bash-it-out-saved-posts" id="bash-it-out-saved-posts">
+				<?php foreach ( $bash_it_out_posts as $post ) { ?>
+					<option value="<?php echo $post->ID; ?>"><?php echo $post->post_title; ?></option>
+				<?php } ?>
+			</select>
+		</fieldset>
+				<?php
+				}
+			}
+		?>
 		<fieldset>
 			<label class="bash-it-out__field-container" for="bash-it-out-writing-time">
-				<span>Writing time (mins)</span>
-				<input type="number" min="10" max="1000" step="10" value="30" name="bash-it-out-writing-time" id="bash-it-out-writing-time" />
+				<span class="bash-it-out__label-text bash-it-out__label-group">Writing time</span>
+				<input type="number" min="10" max="1000" step="10" value="30" name="bash-it-out-writing-time" id="bash-it-out-writing-time" /> mins
 			</label>
 			<label class="bash-it-out__field-container" for="bash-it-out-word-goal">
-				<span>Word goal</span>
-				<span class="bash-it-out__tooltip">
-				<span class="dashicons dashicons-editor-help"></span>
-				<span class="bash-it-out__tooltip-content">Words are all numbers and letters with one or more characters.</span>
-			</span>
+				<span class="bash-it-out__label-group">
+					<span class="bash-it-out__label-text">Word goal</span>
+					<span class="bash-it-out__tooltip">
+						<span class="dashicons dashicons-editor-help"></span>
+						<dfn title="Word goal" class="bash-it-out__tooltip-content">Words are all numbers and letters with one or more characters.</dfn>
+					</span>
+				</span>
 				<input type="number" min="100" max="10000" step="100" value="100" name="bash-it-out-word-goal" id="bash-it-out-word-goal" />
 			</label>
 			<label class="bash-it-out__field-container" for="bash-it-out-reminder-type">
-				<span>Type of reminder:</span>
-				<span class="bash-it-out__tooltip">
-				<span class="dashicons dashicons-editor-help"></span>
-				<span class="bash-it-out__tooltip-content">Set the time before your editor reminds you to keep bashing it out.</span>
-			</span>
+				<span class="bash-it-out__label-group">
+					<span class="bash-it-out__label-text">Type of reminder:</span>
+					<span class="bash-it-out__tooltip">
+						<span class="dashicons dashicons-editor-help"></span>
+						<dfn title="Type of reminder" class="bash-it-out__tooltip-content">Set the time before your editor reminds/nags you to keep bashing it out.</dfn title="Type of reminder">
+					</span>
+				</span>
 				<select name="bash-it-out-reminder-type" id="bash-it-out-reminder-type">
-					<option value="15000">Sleepy editor (15 secs before nagging)</option>
-					<option value="10000" selected>Friendly editor (10 secs before nagging)</option>
-					<option value="5000">Angry editor (5 secs before nagging)</option>
+					<option value="15000">Sleepy editor (15s)</option>
+					<option value="10000" selected>Friendly editor (10s)</option>
+					<option value="5000">Angry editor (5s)</option>
 				</select>
 			</label>
-			<button type="button" class="bash-it-out__start button button-primary button-large">Bash it out!</button>
+			<button type="button" class="bash-it-out__start button button-primary button-large">
+				Bash it out!
+				<span class="dashicons dashicons-hammer"></span>
+			</button>
 		</fieldset>
 	</div>
 
@@ -74,7 +94,7 @@
 				<time class="bash-it-out__time-remaining">--:--:--</time>
 			</div>
 			<div class="bash-it-out__overseer-column">
-				<h3>Words remaining</h3>
+				<h3>Word count</h3>
 				<output class="bash-it-out__words-remaining">-</output>
 			</div>
 			<div class="bash-it-out__overseer-column">

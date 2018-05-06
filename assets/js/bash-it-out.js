@@ -1,6 +1,5 @@
 ( function( $, _bio ){
 	$( function() {
-
 		/*
 			Dependency checks
 		*/
@@ -32,17 +31,15 @@
 		var autoSave = false;
 		var autoSaveTimeout = null;
 		var autoSaveInterval = 10000;
-		var wordGoalReached = false;
+		var hasReachedWordGoal = false;
 		var pressureTimeout = null;
 
 		/*
 			Elements
 		 */
 		var $container = $( '.bash-it-out__container' );
-		var $backgroundShadow = $( '.bash-it-out__shadow-background' );
 
 		// Overseer
-		var $overseerBox = $( '.bash-it-out__overseer' );
 		var $overseerWordsRemaining = $( '.bash-it-out__words-remaining' );
 		var $overseerTimeRemaining = $( '.bash-it-out__time-remaining' );
 		var $overseerPauseButton = $( '.bash-it-out__overseer-pause' );
@@ -75,9 +72,7 @@
 			wordCountGoal = parseInt( $wordGoalField.val() );
 			autoSave = true;
 			createNewPost();
-			$editorTextAreaContainer.addClass( 'bash-it-out__editor-active' );
-			$overseerBox.addClass( 'bash-it-out__overseer-active' );
-			$backgroundShadow.addClass( 'bash-it-out__shadow-background-active' );
+			$container.addClass( 'bash-it-out__editor-active' );
 			$overseerWordsRemaining.text( wordCountGoal - getWordCount() );
 			countDownTimer.set( parseInt( writingTime ) );
 			$overseerTimeRemaining.text( countDownTimer.getClock() );
@@ -91,9 +86,7 @@
 		 */
 		function onOverseerQuitClick() {
 			countDownTimer.stop();
-			$overseerBox.removeClass( 'bash-it-out__overseer-active bash-it-out__overseer-complete' );
-			$editorTextAreaContainer.removeClass( 'bash-it-out__editor-active' );
-			$backgroundShadow.removeClass( 'bash-it-out__shadow-background-active bash-it-out__shadow-background-annoy' );
+			$container.attr('class', 'bash-it-out__container' );
 			$metaBoxFields.attr( 'disabled', false );
 			autoSave = false;
 			clearTimeout( pressureTimeout );
@@ -107,7 +100,9 @@
 			var pausedState = countDownTimer.toggle();
 			if ( pausedState === true ) {
 				$overseerPauseButtonText.text( 'Resume' );
-				$container.addClass( 'bash-it-out__paused' );
+				$container
+					.addClass( 'bash-it-out__paused' )
+					.removeClass( 'bash-it-out__annoy' );
 				clearTimeout( pressureTimeout );
 			} else {
 				$overseerPauseButtonText.text( 'Pause' );
@@ -122,8 +117,8 @@
 		 * @returns undefined
 		 */
 		function onCountdownComplete() {
-			$overseerBox.addClass( 'bash-it-out__overseer-complete' );
 			clearTimeout( pressureTimeout );
+			$container.addClass( 'bash-it-out__complete' );
 			autoSave = false;
 		}
 
@@ -134,11 +129,7 @@
 		 */
 		function onCountdownTick( counterValues ) {
 			if ( isAdminPageActive() ) {
-				var wordCount = getWordCount();
 				$overseerTimeRemaining.text(counterValues.clock);
-				$overseerWordsRemaining.text(wordCountGoal - wordCount);
-				checkStatusWordCountStatus( wordCount );
-				renderProgressBar( wordCount );
 			}
 		}
 
@@ -146,11 +137,17 @@
 		 * Fires on keyup of the text editor so we can track bashing activity
 		 * @returns undefined
 		 */
-		function onEditorTextAreaKeyUp( event ) {
+		function onEditorTextAreaKeyUp() {
+			var wordCount = getWordCount();
+			$overseerWordsRemaining.text( wordCount + '/' + wordCountGoal );
+			checkStatusWordCountStatus( wordCount );
+			setProgressValue( wordCount );
 			// TODO: easter egg track key strokes
 			clearTimeout( pressureTimeout );
-			$backgroundShadow.removeClass( 'bash-it-out__shadow-background-annoy' );
-			startPressureTimer();
+			$container.removeClass( 'bash-it-out__annoy' );
+			if ( ! hasReachedWordGoal ) {
+				startPressureTimer();
+			}
 		}
 
 		/**
@@ -199,14 +196,23 @@
 			].join('');
 		}
 
+		/**
+		 * Fires when the user has reached the set word count
+		 * @returns undefined
+		 */
 		function onWordGoalCompleted() {
 			countDownTimer.stop();
 			autoSave = false;
+			clearTimeout( pressureTimeout );
 			$overseerWordsRemaining.text( 0 );
 			$container.addClass( 'bash-it-out__complete' );
 		}
 
-		function renderProgressBar( currentWordCount ) {
+		/**
+		 * Sets the value of the word count progress bar
+		 * @returns undefined
+		 */
+		function setProgressValue( currentWordCount ) {
 			var progressValue = 100;
 			if ( currentWordCount < wordCountGoal ) {
 				progressValue = Math.floor( currentWordCount / wordCountGoal * 100);
@@ -214,24 +220,32 @@
 			$progressBar.val( progressValue );
 		}
 
+		/**
+		 * Checks to see if the user has reached the set word count
+		 * @returns {boolean} whether the word count as been reached
+		 */
 		function checkStatusWordCountStatus ( currentWordCount ) {
 			if ( currentWordCount >= wordCountGoal ) {
-				if ( wordGoalReached === false ) {
-					wordGoalReached = true;
+				if ( hasReachedWordGoal === false ) {
+					hasReachedWordGoal = true;
 					onWordGoalCompleted();
 				}
 			} else {
-				wordGoalReached = false;
+				hasReachedWordGoal = false;
 			}
-			return wordGoalReached;
+			return hasReachedWordGoal;
 		}
 
+		/**
+		 * Kicks off the nagging timer
+		 * @returns undefined
+		 */
 		function startPressureTimer() {
-			// when $reminderTypeField.val() is up, start nagging by colour/image/sound;
-			// increment by fading in colour/image each second after half-way into the pressure time
+			// TODO: when $reminderTypeField.val() is up, start nagging by colour/image/sound;
+			// TODO: increment by fading in colour/image each second after half-way into the pressure time
 			clearTimeout( pressureTimeout );
 			pressureTimeout = setTimeout( function() {
-				$backgroundShadow.addClass( 'bash-it-out__shadow-background-annoy' );
+				$container.addClass( 'bash-it-out__annoy' );
 			}, $reminderTypeField.val() );
 		}
 
@@ -240,39 +254,84 @@
 		 * @returns {jQuery.jqXHR} jQuery deferred object
 		 */
 		function createNewPost() {
-			var tags = {
-				0:  _bio.TAG_ID
-			};
-			return $.ajax( {
-				method: 'POST',
-				url: _bio.REST_URL + wpiApiUrls[ 'post' ],
-				data: {
+			return savePostData(
+				_bio.REST_URL + wpiApiUrls[ 'post' ],
+				{
 					title:  getContentTitle(),
 					content: $editorTextArea.val(),
 					comment_status: 'closed',
 					type: 'post',
 					status: 'draft',
-					tags: tags
+					tags: {
+						0:  _bio.TAG_ID
+					}
 				},
+				function( error, response ) {
+					$lastAutoSave.html(
+						'<a href="response.link">' + response.title.rendered + '</a> saved.'
+					);
+				}
+			);
+		}
+
+		/**
+		 * Updates current post
+		 * @returns {jQuery.jqXHR} jQuery deferred object
+		 */
+		function updatePost() {
+			return savePostData(
+				_bio.REST_URL + wpiApiUrls[ 'post' ] + '/' + currentPostData.id,
+				{
+					content: $editorTextArea.val()
+				},
+				function( error, response ) {
+					$lastAutoSave.html(
+						'<a href="response.link">' +
+						response.title.rendered +
+						'</a> autosaved at: ' +
+						new Date( response.modified ).toLocaleTimeString()
+					);
+				}
+			);
+		}
+
+		/**
+		 * Saves post data
+		 * @param {string} url the api url to post to
+		 * @param {object} data post data
+		 * @param {function} callback function to call after response is received
+		 * @returns {jQuery.jqXHR} jQuery deferred object
+		 */
+		function savePostData( url, data, callback ) {
+			return $.ajax( {
+				method: 'POST',
+				url: url,
+				data: data,
 				beforeSend: function ( xhr ) {
 					xhr.setRequestHeader( 'X-WP-Nonce', _bio.nonce );
 				},
 				success : function( response ) {
 					if ( ! response ) {
 						countDownTimer.stop();
-						//TODO: show error
+						//TODO: show error in UI
 					}
-					//TODO: abstract this
 					currentPostData = response;
-					$lastAutoSave.html( '<a href="response.link">' + response.title.rendered + '</a> saved.' );
 
 					if ( autoSave === true ) {
 						triggerAutoSave();
 					}
+
+					if ( $.type( callback ) === 'function' ) {
+						callback( null, response );
+					}
 				},
 				error: function( error ) {
+					log.error( error, 'error' );
 					countDownTimer.stop();
-					//TODO: show error
+					if ( $.type( callback ) === 'function' ) {
+						callback( error );
+					}
+					//TODO: show error in UI
 				}
 			} );
 		}
@@ -296,36 +355,6 @@
 			clearTimeout( autoSaveTimeout );
 			autoSave === false;
 			autoSaveTimeout = null;
-		}
-
-		/**
-		 * Updates current post
-		 * TODO: could we do this with https://developer.wordpress.org/plugins/javascript/heartbeat-api/ ?
-		 * @returns {jQuery.jqXHR} jQuery deferred object
-		 */
-		function updatePost() {
-			return $.ajax( {
-				method: 'POST',
-				url: _bio.REST_URL + wpiApiUrls[ 'post' ] + '/' + currentPostData.id,
-				data: {
-					content: $editorTextArea.val(),
-				},
-				beforeSend: function ( xhr ) {
-					xhr.setRequestHeader( 'X-WP-Nonce', _bio.nonce );
-				},
-				success : function( response ) {
-					currentPostData = response;
-					//TODO: abstract this
-					$lastAutoSave.html( '<a href="response.link">' + response.title.rendered + '</a> autosaved at: ' + new Date( response.modified ).toLocaleTimeString() );
-					if ( autoSave === true ) {
-						triggerAutoSave();
-					}
-				},
-				error: function( error ) {
-					countDownTimer.stop();
-					//TODO: show error
-				}
-			} );
 		}
 
 		/**
@@ -490,6 +519,7 @@
 		/*
 			Init
 		 */
+		// TODO: Get info on saved posts to display in dropdown https://developer.wordpress.org/plugins/javascript/heartbeat-api/
 		// assign event handlers
 		if ( $metaBoxStartButton.length ) {
 			$metaBoxStartButton.on( 'click', onMetaBoxButtonClickHandler );
@@ -497,6 +527,7 @@
 
 		$overseerQuitButton.on( 'click', onOverseerQuitClick );
 		$overseerPauseButton.on( 'click', onOverseerPauseClick );
+
 		$editorTextArea.on( 'keyup', onEditorTextAreaKeyUp );
 
 		countDownTimer = Countdown( onCountdownComplete, onCountdownTick );
