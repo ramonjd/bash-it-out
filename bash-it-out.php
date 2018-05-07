@@ -23,8 +23,9 @@ if ( ! defined( 'ABSPATH' ) ) {
 include __DIR__ . '/class-bash-it-out-plugin.php';
 
 if ( is_admin() ) {
-	add_action( 'plugins_loaded', array( 'Bash_It_Out\Plugin', 'init' ) );
+
 }
+add_action( 'plugins_loaded', array( 'Bash_It_Out\Plugin', 'init' ) );
 
 register_activation_hook( __FILE__, array( 'Bash_It_Out\Plugin', 'activate_plugin' ) );
 register_deactivation_hook( __FILE__, array( 'Bash_It_Out\Plugin', 'deactivate_plugin' ) );

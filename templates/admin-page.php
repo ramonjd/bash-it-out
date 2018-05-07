@@ -7,18 +7,22 @@
 	<div class="bash-it-out__settings">
 		<?php
 			if ( method_exists('Bash_It_Out\Plugin', 'get_saved_posts' ) ) {
-				$bash_it_out_posts = Bash_It_Out\Plugin::get_saved_posts();
-				if ( $bash_it_out_posts ) {
+				$posts_query = Bash_It_Out\Plugin::get_saved_posts();
+				if ( $posts_query->have_posts() ) {
 				?>
 		<fieldset>
 			<label class="bash-it-out__field-container" for="bash-it-out-saved-posts">
 				<span class="bash-it-out__label-text bash-it-out__label-group">Load a previously bashed-out post (doesn't work yet :) )</span>
 			</label>
 			<select name="bash-it-out-saved-posts" id="bash-it-out-saved-posts">
-				<?php foreach ( $bash_it_out_posts as $post ) { ?>
-					<option value="<?php echo $post->ID; ?>"><?php echo $post->post_title; ?></option>
-				<?php } ?>
+				<?php while ( $posts_query->have_posts() ) : $posts_query->the_post(); ?>
+					<option value="<?php echo get_the_id(); ?>"><?php echo get_the_title(); ?></option>
+				<?php endwhile; ?>
 			</select>
+			<button type="button" class="bash-it-out__start button button-primary button-large">
+				Load post
+				<span class="dashicons dashicons-hammer"></span>
+			</button>
 		</fieldset>
 				<?php
 				}

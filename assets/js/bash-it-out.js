@@ -25,7 +25,8 @@
 		var writingTime = 0;
 		var countDownTimer = null;
 		var wpiApiUrls = {
-			post: 'wp/v2/posts',
+			post: _bio.REST_URL + 'wp/v2/posts',
+			get: _bio.PLUGIN_REST_URL + 'posts'
 		};
 		var currentPostData;
 		var autoSave = false;
@@ -250,12 +251,22 @@
 		}
 
 		/**
+		 * Retrieves one or all bash it out posts
+		 * @returns {jQuery.jqXHR} jQuery deferred object
+		 */
+		function getPost( id ) {
+			$.getJSON( wpiApiUrls.get + '?id=' + id, function( data ) {
+				console.log( 'data', data );
+			});
+		}
+
+		/**
 		 * Creates new post
 		 * @returns {jQuery.jqXHR} jQuery deferred object
 		 */
 		function createNewPost() {
 			return savePostData(
-				_bio.REST_URL + wpiApiUrls[ 'post' ],
+				wpiApiUrls[ 'post' ],
 				{
 					title:  getContentTitle(),
 					content: $editorTextArea.val(),
@@ -280,7 +291,7 @@
 		 */
 		function updatePost() {
 			return savePostData(
-				_bio.REST_URL + wpiApiUrls[ 'post' ] + '/' + currentPostData.id,
+				wpiApiUrls[ 'post' ] + '/' + currentPostData.id,
 				{
 					content: $editorTextArea.val()
 				},

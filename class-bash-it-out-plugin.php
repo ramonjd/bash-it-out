@@ -26,6 +26,8 @@ class Plugin {
 	const PLUGIN_NAME      = 'Bash It Out';
 	const PLUGIN_SLUG      = 'bash-it-out';
 	const WINDOW_NAMESPACE = 'bashItOut';
+	const REST_NAMESPACE = 'bash-it-out/v1/';
+
 	/**
 	 * Init
 	 */
@@ -71,14 +73,27 @@ class Plugin {
 	private function add_hooks() {
 		add_action( 'current_screen', array( $this, 'check_current_screen' ) );
 		add_action( 'admin_menu', array( $this, 'register_admin_menu' ), 10, 3 );
+		add_action( 'rest_api_init', function () {
+			register_rest_route( self::REST_NAMESPACE, 'posts', array(
+				'methods'  => \WP_REST_Server::READABLE,
+				'callback' => array( $this, 'get_saved_posts_endpoint' ),
+				'args'     => array(
+					'id' => array(
+						'validate_callback' => function( $param ) {
+							return is_numeric( $param );
+						}
+					),
+				)
+			) );
+		} );
 	}
 
 	/**
-	 * Check the current screen to see if we're on the right admin page before we load clientside assets
+	 * Check the current screen to see if we're on the right admin page before we load client side assets
 	 *
 	 * @param {WP_Screen} $current_screen (See: https://codex.wordpress.org/Plugin_API/Action_Reference/current_screen).
 	 */
-	public function check_current_screen( $current_screen ) {
+	public function check_current_screen( \WP_Screen $current_screen ) {
 		if ( 'toplevel_page_bash-it-out-editor' === $current_screen->id ) {
 			add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_clientside_assets' ) );
 		}
@@ -98,12 +113,13 @@ class Plugin {
 		wp_enqueue_script( 'bash-it-out-js', plugin_dir_url( __FILE__ ) . 'assets/js/bash-it-out.js', array( 'jquery' ), '1.0', true );
 		wp_enqueue_style( 'bash-it-out-css', plugin_dir_url( __FILE__ ) . 'assets/css/bash-it-out.css', null, '1.0', 'all' );
 		$js_variables = array(
-			'PLUGIN_NAME'    => static::PLUGIN_NAME,
-			'PLUGIN_VERSION' => static::PLUGIN_VERSION,
-			'REST_URL'       => esc_url_raw( rest_url() ),
-			'PLUGIN_SLUG'    => static::PLUGIN_SLUG,
-			'TAG_ID'         => $this->tag_id,
-			'nonce'          => wp_create_nonce( 'wp_rest' ),
+			'PLUGIN_NAME'           => static::PLUGIN_NAME,
+			'PLUGIN_VERSION'        => static::PLUGIN_VERSION,
+			'REST_URL'              => esc_url_raw( rest_url() ),
+			'PLUGIN_REST_URL'       => esc_url_raw( rest_url() . self::REST_NAMESPACE ),
+			'PLUGIN_SLUG'           => static::PLUGIN_SLUG,
+			'TAG_ID'                => $this->tag_id,
+			'nonce'                 => wp_create_nonce( 'wp_rest' ),
 		);
 		wp_localize_script( 'bash-it-out-js', static::WINDOW_NAMESPACE, $js_variables );
 	}
@@ -111,10 +127,48 @@ class Plugin {
 	/**
 	 * Gets all posts with our tag
 	 *
-	 * @return {array} posts with our tag slug
+	 * @param {number|null} $id a post id
+	 * @return {WP_Query} posts with our tag slug
 	 */
-	public function get_saved_posts() {
-		return query_posts( array( 'tag' => $this->tag_slug, 'orderby' => 'data', 'order' => 'DESC' ) );
+	public function get_saved_posts( $id = null ) {
+		$args = array(
+			'tag_id'      => $this->tag_id,
+			'post_status' => array( 'draft', 'pending', 'publishing' ),
+			'orderby'     => array(
+				'date' => 'DESC',
+			),
+		);
+		if ( isset(  $id ) ) {
+			$args = array_merge( $args, array(
+				'p' => $id,
+			)  );
+		}
+		$query = new \WP_Query( $args );
+		return $query;
+	}
+
+	/**
+	 * Gets all posts with our tag custom API endpoint
+	 * See: https://developer.wordpress.org/rest-api/extending-the-rest-api/adding-custom-endpoints/
+	 *
+	 * @param  WP_REST_Request $request The incoming request.
+	 * @return {object|null} Posts or null if none.
+	 */
+	public function get_saved_posts_endpoint( \WP_REST_Request $request ) {
+		$id = $request->get_param( 'id' );
+		$posts_query = $this->get_saved_posts( $id );
+		if ( ! $posts_query->have_posts() ) {
+			return new \WP_Error( 'no_posts_found', 'No posts found', array( 'status' => 404 ) );
+		}
+		$matching_posts = array();
+		while ( $posts_query->have_posts() ) : $posts_query->the_post();
+			array_push($matching_posts, array(
+				'content' => get_the_content(),
+				'get_the_title' => get_the_title(),
+				'ID' => get_the_ID(),
+			) );
+		endwhile;
+		return $matching_posts;
 	}
 
 	/**
