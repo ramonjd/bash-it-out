@@ -83,7 +83,10 @@ class Plugin {
 							return is_numeric( $param );
 						}
 					),
-				)
+				),
+				'permission_callback' => function () {
+					return current_user_can( 'editor' ) || current_user_can( 'administrator' );
+				}
 			) );
 		} );
 	}
@@ -161,13 +164,15 @@ class Plugin {
 			return new \WP_Error( 'no_posts_found', 'No posts found', array( 'status' => 404 ) );
 		}
 		$matching_posts = array();
-		while ( $posts_query->have_posts() ) : $posts_query->the_post();
+		$posts = $posts_query->posts;
+		foreach( $posts as $post ) {
+			//TODO: create custom endpoints to normalize all the responses
 			array_push($matching_posts, array(
-				'content' => get_the_content(),
-				'get_the_title' => get_the_title(),
-				'ID' => get_the_ID(),
+				'content' => $post->post_content,
+				'title' => $post->post_title,
+				'id' => $post->ID,
 			) );
-		endwhile;
+		}
 		return $matching_posts;
 	}
 

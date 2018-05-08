@@ -19,21 +19,27 @@
 		}
 
 		/*
+			Constants
+		 */
+		var AUTO_SAVE_INTERVAL = 10000;
+		var REST_URLS = {
+			post: _bio.REST_URL + 'wp/v2/posts',
+			get: _bio.PLUGIN_REST_URL + 'posts'
+		};
+
+		/*
 			Variables
 		 */
 		var wordCountGoal = 0;
 		var writingTime = 0;
 		var countDownTimer = null;
-		var wpiApiUrls = {
-			post: _bio.REST_URL + 'wp/v2/posts',
-			get: _bio.PLUGIN_REST_URL + 'posts'
-		};
-		var currentPostData;
+		var currentPostData = null;
 		var autoSave = false;
 		var autoSaveTimeout = null;
-		var autoSaveInterval = 10000;
 		var hasReachedWordGoal = false;
 		var pressureTimeout = null;
+		// This represents the word count of a saved post
+		var baseWordCount = 0;
 
 		/*
 			Elements
@@ -49,11 +55,15 @@
 		var $lastAutoSave = $( '.bash-it-out__autosave' );
 
 		// Settings
-		var $metaBoxStartButton = $( '.bash-it-out__start' );
+		var $settingsBoxStartButton = $( '.bash-it-out__start' );
+		var $settingsBoxLoadPostButton = $( '.bash-it-out__load-post' );
+		var $settingsBoxResetButton = $( '.bash-it-out__reset' );
 		var $writingTimeField = $( 'input[name="bash-it-out-writing-time"]' );
 		var $wordGoalField = $( 'input[name="bash-it-out-word-goal"]' );
 		var $reminderTypeField = $( 'select[name="bash-it-out-reminder-type"]' );
-		var $metaBoxFields = $writingTimeField.add( $wordGoalField, $reminderTypeField, $metaBoxStartButton );
+		var $savedPostsField = $( 'select[name="bash-it-out-saved-posts"]' );
+		var $resetAutoSave = $( '.bash-it-out__reset_autosave' );
+		var $settingsBoxFields = $writingTimeField.add( $savedPostsField, $wordGoalField, $reminderTypeField, $settingsBoxStartButton, $settingsBoxLoadPostButton, $settingsBoxResetButton );
 
 		// Editor
 		var $editorTextArea = $( '#bash-it-out-editor' );
@@ -63,7 +73,7 @@
 		/*
 			Event handlers
 		 */
-		function onMetaBoxButtonClickHandler( event ) {
+		function onStartButtonClick( event ) {
 			event.preventDefault();
 			$( 'html, body' ).animate( {
 				scrollTop: $editorTextAreaContainer.position().top
@@ -72,13 +82,20 @@
 			writingTime = parseInt( $writingTimeField.val() );
 			wordCountGoal = parseInt( $wordGoalField.val() );
 			autoSave = true;
-			createNewPost();
+			baseWordCount = getWordCount();
+
+			if ( currentPostData && currentPostData.id ) {
+				updatePost();
+			} else {
+				createNewPost();
+			}
+
 			$container.addClass( 'bash-it-out__editor-active' );
 			$overseerWordsRemaining.text( wordCountGoal - getWordCount() );
 			countDownTimer.set( parseInt( writingTime ) );
 			$overseerTimeRemaining.text( countDownTimer.getClock() );
 			countDownTimer.start();
-			$metaBoxFields.attr( 'disabled', true );
+			$settingsBoxFields.attr( 'disabled', true );
 		}
 
 		/**
@@ -88,9 +105,65 @@
 		function onOverseerQuitClick() {
 			countDownTimer.stop();
 			$container.attr('class', 'bash-it-out__container' );
-			$metaBoxFields.attr( 'disabled', false );
+			$settingsBoxFields.attr( 'disabled', false );
 			autoSave = false;
 			clearTimeout( pressureTimeout );
+		}
+
+		/**
+		 * Event handler for settings load post button
+		 * @returns undefined
+		 */
+		function onLoadPostClick() {
+			toggleLoading();
+			getPosts( $savedPostsField.val() )
+				.then( function( response ) {
+					toggleLoading( false );
+					currentPostData = response && response[ 0 ] ? response[ 0 ] : null;
+					$editorTextArea.val( currentPostData.content );
+				} );
+		}
+
+		/**
+		 * Event handler for settings reset button
+		 * @returns undefined
+		 */
+		function onResetClick() {
+			autoSave = false;
+			if ( currentPostData ) {
+				toggleLoading();
+				updatePost()
+					.then( function( response ) {
+						$editorTextArea.val( '' );
+						toggleLoading( false );
+						//TODO: abstract
+						$resetAutoSave
+							.html( '<a href="' + response.link + '">' + response.title.rendered + '</a> saved.' )
+							.fadeIn()
+							.delay( 5000 )
+							.fadeOut( function(){
+								$resetAutoSave.html( '' );
+							} );
+						currentPostData = null;
+					} );
+			} else if ( $editorTextArea.val().length > 0 ) {
+				createNewPost()
+					.then( function( response ) {
+					$editorTextArea.val( '' );
+					toggleLoading( false );
+					//TODO: abstract
+					$resetAutoSave
+						.html( '<a href="' + response.link + '">' + response.title.rendered + '</a> created.' )
+						.fadeIn()
+						.delay( 5000 )
+						.fadeOut( function(){
+							$resetAutoSave.html( '' );
+						} );
+					currentPostData = null;
+				} );
+			} else {
+				$editorTextArea.val( '' );
+			}
 		}
 
 		/**
@@ -140,6 +213,7 @@
 		 */
 		function onEditorTextAreaKeyUp() {
 			var wordCount = getWordCount();
+			wordCount = wordCount - baseWordCount;
 			$overseerWordsRemaining.text( wordCount + '/' + wordCountGoal );
 			checkStatusWordCountStatus( wordCount );
 			setProgressValue( wordCount );
@@ -148,6 +222,21 @@
 			$container.removeClass( 'bash-it-out__annoy' );
 			if ( ! hasReachedWordGoal ) {
 				startPressureTimer();
+			}
+		}
+
+		/**
+		 * Activates loading status in the UI
+		 * @param {boolean} loadingStatus true|false activate|deactivate loading status
+		 * @returns undefined
+		 */
+		function toggleLoading( loadingStatus ) {
+			if ( $container.hasClass( 'bash-it-out__loading' ) || loadingStatus === false ) {
+				$container.removeClass( 'bash-it-out__loading' );
+				$settingsBoxFields.attr( 'disabled', false );
+			} else {
+				$container.addClass( 'bash-it-out__loading' );
+				$settingsBoxFields.attr( 'disabled', true );
 			}
 		}
 
@@ -177,7 +266,8 @@
 		 */
 		function getWordCount() {
 			var text = $editorTextArea.val();
-			return text.split(/\w+/).length - 1;
+			var wordCount = text.split(/\w+/).length - 1;
+			return wordCount > -1 ? wordCount : 0;
 		}
 
 		/**
@@ -254,10 +344,12 @@
 		 * Retrieves one or all bash it out posts
 		 * @returns {jQuery.jqXHR} jQuery deferred object
 		 */
-		function getPost( id ) {
-			$.getJSON( wpiApiUrls.get + '?id=' + id, function( data ) {
-				console.log( 'data', data );
-			});
+		function getPosts( id ) {
+			var url = REST_URLS.get + '?_wpnonce=' + _bio.nonce;
+			if ( id ) {
+				url = url + '&id=' + id;
+			}
+			return $.getJSON( url );
 		}
 
 		/**
@@ -266,7 +358,7 @@
 		 */
 		function createNewPost() {
 			return savePostData(
-				wpiApiUrls[ 'post' ],
+				REST_URLS[ 'post' ],
 				{
 					title:  getContentTitle(),
 					content: $editorTextArea.val(),
@@ -279,7 +371,7 @@
 				},
 				function( error, response ) {
 					$lastAutoSave.html(
-						'<a href="response.link">' + response.title.rendered + '</a> saved.'
+						'<a href="' + response.link + '">' + response.title.rendered + '</a> saved.'
 					);
 				}
 			);
@@ -291,13 +383,13 @@
 		 */
 		function updatePost() {
 			return savePostData(
-				wpiApiUrls[ 'post' ] + '/' + currentPostData.id,
+				REST_URLS[ 'post' ] + '/' + currentPostData.id,
 				{
 					content: $editorTextArea.val()
 				},
 				function( error, response ) {
 					$lastAutoSave.html(
-						'<a href="response.link">' +
+						'<a href="' + response.link + '">' +
 						response.title.rendered +
 						'</a> autosaved at: ' +
 						new Date( response.modified ).toLocaleTimeString()
@@ -326,6 +418,7 @@
 						countDownTimer.stop();
 						//TODO: show error in UI
 					}
+
 					currentPostData = response;
 
 					if ( autoSave === true ) {
@@ -354,7 +447,7 @@
 		function triggerAutoSave() {
 			if ( isAdminPageActive() ) {
 				clearTimeout( autoSaveTimeout );
-				autoSaveTimeout = setTimeout( updatePost, autoSaveInterval );
+				autoSaveTimeout = setTimeout( updatePost, AUTO_SAVE_INTERVAL );
 			}
 		}
 
@@ -526,18 +619,19 @@
 			};
 		}
 
-
 		/*
 			Init
 		 */
 		// TODO: Get info on saved posts to display in dropdown https://developer.wordpress.org/plugins/javascript/heartbeat-api/
 		// assign event handlers
-		if ( $metaBoxStartButton.length ) {
-			$metaBoxStartButton.on( 'click', onMetaBoxButtonClickHandler );
+		if ( $settingsBoxStartButton.length ) {
+			$settingsBoxStartButton.on( 'click', onStartButtonClick );
 		}
 
+		$settingsBoxLoadPostButton.on( 'click', onLoadPostClick );
 		$overseerQuitButton.on( 'click', onOverseerQuitClick );
 		$overseerPauseButton.on( 'click', onOverseerPauseClick );
+		$settingsBoxResetButton.on( 'click', onResetClick );
 
 		$editorTextArea.on( 'keyup', onEditorTextAreaKeyUp );
 

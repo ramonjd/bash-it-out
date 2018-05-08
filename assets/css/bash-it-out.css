@@ -7,6 +7,7 @@
 }
 /* The states of the app: */
 .bash-it-out__container.bash-it-out__paused {}
+.bash-it-out__container.bash-it-out__loading {}
 .bash-it-out__container.bash-it-out__complete {}
 .bash-it-out__container.bash-it-out__annoy {}
 .bash-it-out__container.bash-it-out__editor-active {}
@@ -18,7 +19,7 @@
 */
 .bash-it-out__settings {
 	margin-bottom: 15px;
-	padding: 20px;
+	padding: 10px 10px 0 10px;
 	border: 1px solid #aaa;
 	box-sizing: border-box;
 	background: #ccc;
@@ -26,6 +27,9 @@
 
 .bash-it-out__settings fieldset {
 	display: block;
+	margin-bottom: 10px;
+	background-color: #eee;
+	padding: 10px;
 }
 
 .bash-it-out__settings label {
@@ -65,11 +69,7 @@
 	display: block;
 }
 
-.bash-it-out__start {
-
-}
-
-.bash-it-out__start .dashicons-hammer {
+.bash-it-out__settings .button-large .dashicons {
 	line-height: 1.3;
 }
 
@@ -83,6 +83,27 @@
 		margin-bottom: 15px;
 		margin-right: 0;
 	}
+
+	.bash-it-out__settings select {
+		width: 90%;
+		display: block;
+		margin-bottom: 20px;
+	}
+
+	.bash-it-out__label-group {
+		display: block;
+	}
+}
+
+.bash-it-out__reset-container {
+	text-align: right;
+	margin-bottom: 20px;
+	font-size: 10px;
+}
+
+.bash-it-out__reset-container span {
+	vertical-align: middle;
+	display: inline-block;
 }
 
 /**

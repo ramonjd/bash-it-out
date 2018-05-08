@@ -5,29 +5,6 @@
 	<p>Can't reach your word count goals? Does writer's block have its craggy hand around the throat of your creativity? Sometimes just bashing something out is the answer. Set your word count goal below, along with a time limit and let your fingers fly. Your editor will remind you should you falter. Happy writing!</p>
 	<p>Every time you bash one out, it creates a new draft post with the tag <strong><?php echo get_admin_page_title(); ?></strong>. Your work will be autosaved every 10 seconds.</p>
 	<div class="bash-it-out__settings">
-		<?php
-			if ( method_exists('Bash_It_Out\Plugin', 'get_saved_posts' ) ) {
-				$posts_query = Bash_It_Out\Plugin::get_saved_posts();
-				if ( $posts_query->have_posts() ) {
-				?>
-		<fieldset>
-			<label class="bash-it-out__field-container" for="bash-it-out-saved-posts">
-				<span class="bash-it-out__label-text bash-it-out__label-group">Load a previously bashed-out post (doesn't work yet :) )</span>
-			</label>
-			<select name="bash-it-out-saved-posts" id="bash-it-out-saved-posts">
-				<?php while ( $posts_query->have_posts() ) : $posts_query->the_post(); ?>
-					<option value="<?php echo get_the_id(); ?>"><?php echo get_the_title(); ?></option>
-				<?php endwhile; ?>
-			</select>
-			<button type="button" class="bash-it-out__start button button-primary button-large">
-				Load post
-				<span class="dashicons dashicons-hammer"></span>
-			</button>
-		</fieldset>
-				<?php
-				}
-			}
-		?>
 		<fieldset>
 			<label class="bash-it-out__field-container" for="bash-it-out-writing-time">
 				<span class="bash-it-out__label-text bash-it-out__label-group">Writing time</span>
@@ -38,10 +15,10 @@
 					<span class="bash-it-out__label-text">Word goal</span>
 					<span class="bash-it-out__tooltip">
 						<span class="dashicons dashicons-editor-help"></span>
-						<dfn title="Word goal" class="bash-it-out__tooltip-content">Words are all numbers and letters with one or more characters.</dfn>
+						<dfn title="Word goal" class="bash-it-out__tooltip-content">Words are all numbers and letters with one or more characters. If you've loaded a previously-saved post, this number will be in addition to the loaded post's total count.</dfn>
 					</span>
 				</span>
-				<input type="number" min="100" max="10000" step="100" value="100" name="bash-it-out-word-goal" id="bash-it-out-word-goal" />
+				<input type="number" min="100" max="2000" step="100" value="100" name="bash-it-out-word-goal" id="bash-it-out-word-goal" />
 			</label>
 			<label class="bash-it-out__field-container" for="bash-it-out-reminder-type">
 				<span class="bash-it-out__label-group">
@@ -62,6 +39,35 @@
 				<span class="dashicons dashicons-hammer"></span>
 			</button>
 		</fieldset>
+		<?php
+		if ( method_exists('Bash_It_Out\Plugin', 'get_saved_posts' ) ) {
+			$posts_query = Bash_It_Out\Plugin::get_saved_posts();
+			if ( $posts_query->have_posts() ) {
+				?>
+				<fieldset>
+					<label class="bash-it-out__field-container" for="bash-it-out-saved-posts">
+						<span class="bash-it-out__label-text bash-it-out__label-group">Load a previously bashed-out post</span>
+						<select name="bash-it-out-saved-posts" id="bash-it-out-saved-posts" >
+							<?php while ( $posts_query->have_posts() ) : $posts_query->the_post(); ?>
+								<option value="<?php echo get_the_id(); ?>"><?php echo get_the_title(); ?></option>
+							<?php endwhile; ?>
+						</select>
+					</label>
+					<button type="button" class="bash-it-out__load-post button button-secondary button-small">
+						Load post into editor
+					</button>
+				</fieldset>
+				<?php
+			}
+		}
+		?>
+	</div>
+	<div class="bash-it-out__reset-container">
+		<button type="button" class="bash-it-out__reset button button-secondary button-small">
+			Reset everything
+		</button>
+		<span><strong>Warning!</strong> <em>This will save your work and clear the editor.</em></span>
+		<div class="bash-it-out__reset_autosave"></div>
 	</div>
 
 	<div class="bash-it-out__editor-container">
