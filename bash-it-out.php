@@ -20,11 +20,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-include __DIR__ . '/class-bash-it-out-plugin.php';
+require_once( plugin_dir_path( __FILE__ ) . '/class-bash-it-out-plugin.php' );
 
-if ( is_admin() ) {
-
-}
 add_action( 'plugins_loaded', array( 'Bash_It_Out\Plugin', 'init' ) );
 
 register_activation_hook( __FILE__, array( 'Bash_It_Out\Plugin', 'activate_plugin' ) );

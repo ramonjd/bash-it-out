@@ -345,10 +345,11 @@
 		 * @returns {jQuery.jqXHR} jQuery deferred object
 		 */
 		function getPosts( id ) {
-			var url = REST_URLS.get + '?_wpnonce=' + _bio.nonce;
+			var url = REST_URLS.get;
 			if ( id ) {
-				url = url + '&id=' + id;
+				url = url + '/' + id;
 			}
+			url = url + '?_wpnonce=' + _bio.nonce;
 			return $.getJSON( url );
 		}
 

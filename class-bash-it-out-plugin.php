@@ -14,6 +14,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
+require_once( plugin_dir_path( __FILE__ ) . '/class-bash-it-out-post-routes.php' );
+
 /**
  * Plugin Class
  *
@@ -26,8 +28,6 @@ class Plugin {
 	const PLUGIN_NAME      = 'Bash It Out';
 	const PLUGIN_SLUG      = 'bash-it-out';
 	const WINDOW_NAMESPACE = 'bashItOut';
-	const REST_NAMESPACE = 'bash-it-out/v1/';
-
 	/**
 	 * Init
 	 */
@@ -51,8 +51,8 @@ class Plugin {
 	 * Get instance
 	 */
 	public function __construct() {
-		$this->add_hooks();
 		$this->add_taxonomy();
+		$this->add_hooks();
 	}
 
 	/**
@@ -71,24 +71,14 @@ class Plugin {
 	 * Add custom WordPress hooks
 	 */
 	private function add_hooks() {
-		add_action( 'current_screen', array( $this, 'check_current_screen' ) );
-		add_action( 'admin_menu', array( $this, 'register_admin_menu' ), 10, 3 );
-		add_action( 'rest_api_init', function () {
-			register_rest_route( self::REST_NAMESPACE, 'posts', array(
-				'methods'  => \WP_REST_Server::READABLE,
-				'callback' => array( $this, 'get_saved_posts_endpoint' ),
-				'args'     => array(
-					'id' => array(
-						'validate_callback' => function( $param ) {
-							return is_numeric( $param );
-						}
-					),
-				),
-				'permission_callback' => function () {
-					return current_user_can( 'editor' ) || current_user_can( 'administrator' );
-				}
-			) );
-		} );
+		if (is_admin()) {
+			add_action('current_screen', array($this, 'check_current_screen'));
+			add_action('admin_menu', array($this, 'register_admin_menu'), 10, 3);
+		}
+
+		if (isset($this->tag_id)) {
+			$this->rest_controller = new Post_Routes($this->tag_id);
+		}
 	}
 
 	/**
@@ -119,7 +109,7 @@ class Plugin {
 			'PLUGIN_NAME'           => static::PLUGIN_NAME,
 			'PLUGIN_VERSION'        => static::PLUGIN_VERSION,
 			'REST_URL'              => esc_url_raw( rest_url() ),
-			'PLUGIN_REST_URL'       => esc_url_raw( rest_url() . self::REST_NAMESPACE ),
+			'PLUGIN_REST_URL'       => esc_url_raw( rest_url() . Post_Routes::REST_NAMESPACE ),
 			'PLUGIN_SLUG'           => static::PLUGIN_SLUG,
 			'TAG_ID'                => $this->tag_id,
 			'nonce'                 => wp_create_nonce( 'wp_rest' ),
@@ -128,52 +118,12 @@ class Plugin {
 	}
 
 	/**
-	 * Gets all posts with our tag
+	 * Calls our custom rest api to get the saved, bashed-posts
 	 *
-	 * @param {number|null} $id a post id
-	 * @return {WP_Query} posts with our tag slug
+	 * @return {array} posts with our tag slug
 	 */
-	public function get_saved_posts( $id = null ) {
-		$args = array(
-			'tag_id'      => $this->tag_id,
-			'post_status' => array( 'draft', 'pending', 'publishing' ),
-			'orderby'     => array(
-				'date' => 'DESC',
-			),
-		);
-		if ( isset(  $id ) ) {
-			$args = array_merge( $args, array(
-				'p' => $id,
-			)  );
-		}
-		$query = new \WP_Query( $args );
-		return $query;
-	}
-
-	/**
-	 * Gets all posts with our tag custom API endpoint
-	 * See: https://developer.wordpress.org/rest-api/extending-the-rest-api/adding-custom-endpoints/
-	 *
-	 * @param  WP_REST_Request $request The incoming request.
-	 * @return {object|null} Posts or null if none.
-	 */
-	public function get_saved_posts_endpoint( \WP_REST_Request $request ) {
-		$id = $request->get_param( 'id' );
-		$posts_query = $this->get_saved_posts( $id );
-		if ( ! $posts_query->have_posts() ) {
-			return new \WP_Error( 'no_posts_found', 'No posts found', array( 'status' => 404 ) );
-		}
-		$matching_posts = array();
-		$posts = $posts_query->posts;
-		foreach( $posts as $post ) {
-			//TODO: create custom endpoints to normalize all the responses
-			array_push($matching_posts, array(
-				'content' => $post->post_content,
-				'title' => $post->post_title,
-				'id' => $post->ID,
-			) );
-		}
-		return $matching_posts;
+	public function get_saved_posts() {
+		return $this->rest_controller->get_saved_posts();
 	}
 
 	/**
