@@ -77,6 +77,10 @@
 	display: inline-block;
 }
 
+.bash-it-out__fieldset-saved-posts.hidden {
+	display: none;
+}
+
 @media all and ( max-width: 782px ) {
 	.bash-it-out__settings label {
 		display: block;

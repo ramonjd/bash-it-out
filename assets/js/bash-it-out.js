@@ -22,10 +22,6 @@
 			Constants
 		 */
 		var AUTO_SAVE_INTERVAL = 10000;
-		var REST_URLS = {
-			post: _bio.REST_URL + 'wp/v2/posts',
-			get: _bio.PLUGIN_REST_URL + 'posts'
-		};
 
 		/*
 			Variables
@@ -63,6 +59,8 @@
 		var $reminderTypeField = $( 'select[name="bash-it-out-reminder-type"]' );
 		var $savedPostsField = $( 'select[name="bash-it-out-saved-posts"]' );
 		var $resetAutoSave = $( '.bash-it-out__reset_autosave' );
+		var $currentPostTitle = $( '.bash-it-out__current-post-title' );
+		var $savedPostsFieldset = $( '.bash-it-out__fieldset-saved-posts' );
 		var $settingsBoxFields = $writingTimeField.add( $savedPostsField, $wordGoalField, $reminderTypeField, $settingsBoxStartButton, $settingsBoxLoadPostButton, $settingsBoxResetButton );
 
 		// Editor
@@ -91,7 +89,7 @@
 			}
 
 			$container.addClass( 'bash-it-out__editor-active' );
-			$overseerWordsRemaining.text( wordCountGoal - getWordCount() );
+			setWordCountValues();
 			countDownTimer.set( parseInt( writingTime ) );
 			$overseerTimeRemaining.text( countDownTimer.getClock() );
 			countDownTimer.start();
@@ -107,6 +105,8 @@
 			$container.attr('class', 'bash-it-out__container' );
 			$settingsBoxFields.attr( 'disabled', false );
 			autoSave = false;
+			$overseerWordsRemaining.text( '' );
+			$overseerTimeRemaining.text( '' );
 			clearTimeout( pressureTimeout );
 		}
 
@@ -115,11 +115,17 @@
 		 * @returns undefined
 		 */
 		function onLoadPostClick() {
+			var postId = parseInt( $savedPostsField.val() );
+			if ( currentPostData && ( currentPostData.id === postId ) ) {
+				log( 'This post is already loaded', 'warn' );
+				return false;
+			}
 			toggleLoading();
-			getPosts( $savedPostsField.val() )
+			getPosts( postId )
 				.then( function( response ) {
 					toggleLoading( false );
-					currentPostData = response && response[ 0 ] ? response[ 0 ] : null;
+					currentPostData = response[ 0 ];
+					$currentPostTitle.text( currentPostData.title );
 					$editorTextArea.val( currentPostData.content );
 				} );
 		}
@@ -129,38 +135,14 @@
 		 * @returns undefined
 		 */
 		function onResetClick() {
-			autoSave = false;
+			cancelAutoSave();
 			if ( currentPostData ) {
 				toggleLoading();
 				updatePost()
-					.then( function( response ) {
-						$editorTextArea.val( '' );
-						toggleLoading( false );
-						//TODO: abstract
-						$resetAutoSave
-							.html( '<a href="' + response.link + '">' + response.title.rendered + '</a> saved.' )
-							.fadeIn()
-							.delay( 5000 )
-							.fadeOut( function(){
-								$resetAutoSave.html( '' );
-							} );
-						currentPostData = null;
-					} );
+					.then( onResetClickCallback );
 			} else if ( $editorTextArea.val().length > 0 ) {
 				createNewPost()
-					.then( function( response ) {
-					$editorTextArea.val( '' );
-					toggleLoading( false );
-					//TODO: abstract
-					$resetAutoSave
-						.html( '<a href="' + response.link + '">' + response.title.rendered + '</a> created.' )
-						.fadeIn()
-						.delay( 5000 )
-						.fadeOut( function(){
-							$resetAutoSave.html( '' );
-						} );
-					currentPostData = null;
-				} );
+					.then( onResetClickCallback );
 			} else {
 				$editorTextArea.val( '' );
 			}
@@ -182,7 +164,6 @@
 				$overseerPauseButtonText.text( 'Pause' );
 				$container.removeClass( 'bash-it-out__paused' );
 			}
-			autoSave = false;
 		}
 
 		/**
@@ -212,16 +193,15 @@
 		 * @returns undefined
 		 */
 		function onEditorTextAreaKeyUp() {
-			var wordCount = getWordCount();
-			wordCount = wordCount - baseWordCount;
-			$overseerWordsRemaining.text( wordCount + '/' + wordCountGoal );
-			checkStatusWordCountStatus( wordCount );
-			setProgressValue( wordCount );
+			setWordCountValues();
 			// TODO: easter egg track key strokes
 			clearTimeout( pressureTimeout );
 			$container.removeClass( 'bash-it-out__annoy' );
 			if ( ! hasReachedWordGoal ) {
 				startPressureTimer();
+			}
+			if ( ! autoSave ) {
+				autoSave = true;
 			}
 		}
 
@@ -238,6 +218,38 @@
 				$container.addClass( 'bash-it-out__loading' );
 				$settingsBoxFields.attr( 'disabled', true );
 			}
+		}
+
+		/**
+		 * Get the word count and displays it to the UI/passes it onto related methods
+		 * @returns undefined
+		 */
+		function setWordCountValues() {
+			var wordCount = getWordCount();
+			wordCount = wordCount - baseWordCount;
+			$overseerWordsRemaining.text( wordCount + '/' + wordCountGoal );
+			checkStatusWordCountStatus( wordCount );
+			setProgressValue( wordCount );
+		}
+
+		/**
+		 * Sets a faded out message after reset save
+		 * @param {array} response posts api response
+		 * @param {string} actionText message to appear after title link
+		 * @returns undefined
+		 */
+		function onResetClickCallback( response ) {
+			$editorTextArea.val( '' );
+			toggleLoading( false );
+			$resetAutoSave
+				.html( '<a href="' + response[ 0 ].link + '">' + response[ 0 ].title + '</a> saved.' )
+				.fadeIn()
+				.delay( 5000 )
+				.fadeOut( function(){
+					$resetAutoSave.html( '' );
+				} );
+			currentPostData = null;
+			$currentPostTitle.text( 'Waiting to bash a new one out...' );
 		}
 
 		/**
@@ -266,25 +278,8 @@
 		 */
 		function getWordCount() {
 			var text = $editorTextArea.val();
-			var wordCount = text.split(/\w+/).length - 1;
+			var wordCount = text.split( /\w+/ ).length - 1;
 			return wordCount > -1 ? wordCount : 0;
-		}
-
-		/**
-		 * Returns a title for a new post or page
-		 * currently a formatted date and time
-		 * @returns {string}
-		 */
-		function getContentTitle() {
-			var date = new Date();
-			return [
-				_bio.PLUGIN_NAME,
-				': ',
-				// TODO: localize
-				date.toLocaleDateString( 'en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' } ),
-				' ',
-				date.toLocaleTimeString()
-			].join('');
 		}
 
 		/**
@@ -295,7 +290,6 @@
 			countDownTimer.stop();
 			autoSave = false;
 			clearTimeout( pressureTimeout );
-			$overseerWordsRemaining.text( 0 );
 			$container.addClass( 'bash-it-out__complete' );
 		}
 
@@ -336,6 +330,10 @@
 			// TODO: increment by fading in colour/image each second after half-way into the pressure time
 			clearTimeout( pressureTimeout );
 			pressureTimeout = setTimeout( function() {
+				// If there's no typin' there's no savin'
+				if ( autoSave ) {
+					autoSave = false;
+				}
 				$container.addClass( 'bash-it-out__annoy' );
 			}, $reminderTypeField.val() );
 		}
@@ -345,7 +343,7 @@
 		 * @returns {jQuery.jqXHR} jQuery deferred object
 		 */
 		function getPosts( id ) {
-			var url = REST_URLS.get;
+			var url = _bio.PLUGIN_REST_BASE;
 			if ( id ) {
 				url = url + '/' + id;
 			}
@@ -359,9 +357,8 @@
 		 */
 		function createNewPost() {
 			return savePostData(
-				REST_URLS[ 'post' ],
+				_bio.PLUGIN_REST_BASE,
 				{
-					title:  getContentTitle(),
 					content: $editorTextArea.val(),
 					comment_status: 'closed',
 					type: 'post',
@@ -371,9 +368,14 @@
 					}
 				},
 				function( error, response ) {
+					if ( error || ! response || ! response[ 0 ] ) {
+						return log( 'Post could not be created', 'error' );
+					}
 					$lastAutoSave.html(
-						'<a href="' + response.link + '">' + response.title.rendered + '</a> saved.'
+						'<a href="' + response[ 0 ].link + '">' + response[ 0 ].title + '</a> saved.'
 					);
+					$savedPostsFieldset.removeClass( 'hidden' );
+					$savedPostsField.append( '<option value="' + response[ 0 ].id + '">' + response[ 0 ].title + '</option>' );
 				}
 			);
 		}
@@ -384,16 +386,19 @@
 		 */
 		function updatePost() {
 			return savePostData(
-				REST_URLS[ 'post' ] + '/' + currentPostData.id,
+				_bio.PLUGIN_REST_BASE + '/' + currentPostData.id,
 				{
 					content: $editorTextArea.val()
 				},
 				function( error, response ) {
+					if ( error || ! response || ! response[ 0 ] ) {
+						return log( 'Post could not be saved', 'error' );
+					}
 					$lastAutoSave.html(
-						'<a href="' + response.link + '">' +
-						response.title.rendered +
+						'<a href="' + response[ 0 ].link + '">' +
+						response[ 0 ].title +
 						'</a> autosaved at: ' +
-						new Date( response.modified ).toLocaleTimeString()
+						new Date( response[ 0 ].modified ).toLocaleTimeString()
 					);
 				}
 			);
@@ -420,7 +425,8 @@
 						//TODO: show error in UI
 					}
 
-					currentPostData = response;
+					currentPostData = response[ 0 ];
+					$currentPostTitle.text( currentPostData.title );
 
 					if ( autoSave === true ) {
 						triggerAutoSave();
@@ -429,13 +435,18 @@
 					if ( $.type( callback ) === 'function' ) {
 						callback( null, response );
 					}
+
+					return response;
 				},
 				error: function( error ) {
-					log.error( error, 'error' );
+					log( error, 'error' );
+					autoSave === false;
 					countDownTimer.stop();
 					if ( $.type( callback ) === 'function' ) {
 						callback( error );
 					}
+
+					return error;
 					//TODO: show error in UI
 				}
 			} );
@@ -637,6 +648,8 @@
 		$editorTextArea.on( 'keyup', onEditorTextAreaKeyUp );
 
 		countDownTimer = Countdown( onCountdownComplete, onCountdownTick );
+
+		$currentPostTitle.text( 'Waiting to bash a new one out...' );
 
 
 	} );

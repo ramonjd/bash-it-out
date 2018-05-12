@@ -16,51 +16,50 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 /**
  * Custom_Routes Class
- * See: https://developer.wordpress.org/rest-api/extending-the-rest-api/schema/
+ * See: https://developer.wordpress.org/rest-api/extending-the-rest-api/
  *
  * @package Bash_It_Out
  * @namespace Bash_It_Out
  */
 class Post_Routes extends \WP_REST_Controller {
+	/**
+	 * Constants
+	 */
 	const REST_NAMESPACE = 'bash-it-out/v1/';
 	const REST_BASE = 'posts';
-	/**
-	 * The namespace.
-	 *
-	 * @var string
-	 */
-	protected $namespace;
 
 	/**
 	 * Category_List_Rest constructor.
+	 *
+	 * @param {string} $plugin_name name of plugin
 	 */
-	public function __construct( int $tag_id = null ) {
-		if ( empty( $tag_id ) ) {
-			return new WP_Error( 'rest_controller', esc_html__( 'Tag ID not found' ) );
+	public function __construct( string $plugin_name ) {
+		if ( empty( $plugin_name ) ) {
+			return new WP_Error( 'rest_controller', esc_html__( 'Correct arguments not found' ) );
 		}
-		$this->tag_id = $tag_id;
+		$this->plugin_name = $plugin_name;
 		add_action( 'rest_api_init', array( $this, 'register_routes' ) );
 	}
+
 	/**
 	 * Register the routes for the objects of the controller.
 	 */
 	public function register_routes() {
-		// register general post routes
 		register_rest_route( static::REST_NAMESPACE, static::REST_BASE, array(
 			array(
 				'methods'             => \WP_REST_Server::READABLE,
 				'callback'            => array( $this, 'get_posts' ),
 				'permission_callback' => array( $this, 'permissions_check' ),
 			),
-/*			array(
-				'methods'         => WP_REST_Server::CREATABLE,
-				'callback'        => array( $this, 'create_post' ),
+			array(
+				'methods'             => \WP_REST_Server::CREATABLE,
+				'callback'            => array( $this, 'create_post' ),
 				'permission_callback' => array( $this, 'permissions_check' ),
-				'args'            => $this->get_endpoint_args_for_item_schema( true ),
-			),*/
+				'args'                => $this->get_endpoint_args_for_item_schema( \WP_REST_Server::CREATABLE ),
+			),
+ 			'schema' => array( $this, 'get_public_item_schema' ),
 		) );
 
-		// register individial post routes
 		register_rest_route( static::REST_NAMESPACE, static::REST_BASE . '/(?P<id>[0-9]+)', array(
 			array(
 				'methods'         => \WP_REST_Server::READABLE,
@@ -75,7 +74,7 @@ class Post_Routes extends \WP_REST_Controller {
 						}
 					),
 					'content' => array(
-						'description'       => esc_html__( 'The id of the post' ),
+						'description'       => esc_html__( 'The content of the post' ),
 						'type'              => 'string',
 						'validate_callback' => function( $param ) {
 							return ! empty( $param );
@@ -86,12 +85,12 @@ class Post_Routes extends \WP_REST_Controller {
 					),
 				),
 			),
-/*			array(
-				'methods'         => WP_REST_Server::EDITABLE,
-				'callback'        => array( $this, 'update_post' ),
+			array(
+				'methods'             => \WP_REST_Server::EDITABLE,
+				'callback'            => array( $this, 'update_post' ),
 				'permission_callback' => array( $this, 'permissions_check' ),
-				'args'            => $this->get_endpoint_args_for_item_schema( false ),
-			),*/
+				'args'                => $this->get_endpoint_args_for_item_schema( \WP_REST_Server::EDITABLE ),
+			),
 		) );
 	}
 
@@ -102,11 +101,7 @@ class Post_Routes extends \WP_REST_Controller {
 	 * @return {WP_Error|WP_REST_Response}
 	 */
 	public function get_posts( \WP_REST_Request $request ) {
-		$posts_query = $this->get_saved_posts();
-		if ( ! $posts_query->have_posts() ) {
-			return new \WP_Error( 'no_posts_found', 'No posts found', array( 'status' => 404 ) );
-		}
-		return $this->normalize_saved_posts_return_value( $posts_query->posts );
+		return $this->get_saved_posts();
 	}
 
 	/**
@@ -116,22 +111,89 @@ class Post_Routes extends \WP_REST_Controller {
 	 * @return {WP_Error|WP_REST_Response}
 	 */
 	public function get_post( \WP_REST_Request $request ) {
-		$id = $request->get_param( 'id' );
-		$posts_query = $this->get_saved_posts( $id );
-		if ( ! $posts_query->have_posts() ) {
-			return new \WP_Error( 'no_posts_found', 'No posts found', array( 'status' => 404 ) );
+		return $this->get_saved_posts( $request->get_param( 'id' ) );
+	}
+
+	/**
+	 * Create a new bash it out post
+	 * See: https://developer.wordpress.org/reference/functions/wp_insert_post/
+	 *
+	 * @param {WP_REST_Request} $request Full data about the request.
+	 * @return {array|int}
+	 */
+	public function create_post( \WP_REST_Request $request ) {
+		$title = $request->get_param( 'title' );
+		if ( isset( $title ) && ! empty( $title ) ) {
+			$title = wp_filter_nohtml_kses( sanitize_text_field( $title ) );
+		} else {
+			$title = $this->plugin_name . ': ' .  $date = date('l, F j, Y H:i:s');
 		}
-		return $this->normalize_saved_posts_return_value( $posts_query->posts );
+
+		$content = $request->get_param( 'content' );
+
+		if ( ! isset( $content ) ) {
+			return new \WP_Error( 'malformed_request', 'The post could not be updated due to some bad parameters', array( 'status' => 400 ) );
+		}
+
+		$user_id = get_current_user_id();
+		$post_args = array(
+			'post_author'     => $user_id,
+			'post_title'      => $title,
+			'post_content'    => $content,
+			'post_status'     => 'draft',
+			'comment_status'  => 'closed',
+		);
+		$result = wp_insert_post( $post_args );
+
+		// If the result is a post ID.
+		if ( is_numeric( $result ) ) {
+			// Set the plugin's tag.
+			wp_set_post_tags( $result, $this->plugin_name, true );
+			return $this->normalize_posts_return_value( array( get_post( $result ) ) );
+		}
+		return $result;
+	}
+
+	/**
+	 * Update new bash it out post
+	 * See: https://developer.wordpress.org/reference/functions/wp_update_post/
+	 *
+	 * @param {WP_REST_Request} $request Full data about the request.
+	 * @return {array|int}
+	 */
+	public function update_post( \WP_REST_Request $request ) {
+		$id = $request->get_param( 'id' );
+		$content = $request->get_param( 'content' );
+
+		if ( ! isset( $content ) || ! isset( $id ) ) {
+			return new \WP_Error( 'malformed_request', 'The post could not be updated due to some bad parameters', array( 'status' => 400 ) );
+		}
+
+		$post_args = array(
+			'ID'           => $id,
+			'post_content' => $content,
+		);
+		$result = wp_update_post( $post_args );
+
+		if ( is_wp_error( $result )  ) {
+			return $result;
+		}
+
+		// If the result is a post ID
+		if ( is_numeric( $result ) && $result !== 0 ) {
+			return $this->normalize_posts_return_value( array( get_post( $result ) ) );
+		}
+
+		return new \WP_Error( 'no_post_found', 'No post found with that id', array( 'status' => 404 ) );
 	}
 
 	/**
 	 * Check if a given request has access to get items
 	 *
-	 * @param WP_REST_Request $request Full data about the request.
-	 * @return WP_Error|bool
+	 * @param {WP_REST_Request} $request Full data about the request.
+	 * @return {WP_Error|bool}
 	 */
-	public function permissions_check( $request ) {
-		$nonce = wp_verify_nonce( $request->get_param( '_wpnonce' ), 'wp_rest' );
+	public function permissions_check() {
 		return ( current_user_can( 'editor' ) || current_user_can( 'administrator' ) );
 	}
 
@@ -141,13 +203,16 @@ class Post_Routes extends \WP_REST_Controller {
 	 * @param {array} $posts an array of posts return from WP_Query
 	 * @return {array} normalized response
 	 */
-	private function normalize_saved_posts_return_value( $posts = array() ) {
+	private function normalize_posts_return_value( $posts = array() ) {
 		$response = array();
 		foreach( $posts as $post ) {
 			array_push($response, array(
 				'content' => $post->post_content,
 				'title' => $post->post_title,
+				'date' => $post->post_date,
 				'id' => $post->ID,
+				'link' => get_permalink( $post->ID ),
+				'modified' => $post->post_modified,
 			) );
 		}
 		return $response;
@@ -160,8 +225,9 @@ class Post_Routes extends \WP_REST_Controller {
 	 * @return {WP_Query} posts with our tag slug
 	 */
 	public function get_saved_posts( $id = null ) {
+		$tag_data = get_term_by( 'name', $this->plugin_name, 'post_tag' );
 		$args = array(
-			'tag_id'      => $this->tag_id,
+			'tag_id'      => $tag_data->term_id,
 			'post_status' => array( 'draft', 'pending', 'publishing' ),
 			'orderby'     => array(
 				'date' => 'DESC',
@@ -173,6 +239,9 @@ class Post_Routes extends \WP_REST_Controller {
 			)  );
 		}
 		$query = new \WP_Query( $args );
-		return $query;
+		if ( ! $query->have_posts() ) {
+			return new \WP_Error( 'no_posts_found', 'No posts found', array( 'status' => 404 ) );
+		}
+		return $this->normalize_posts_return_value( $query->posts );
 	}
 }

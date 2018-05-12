@@ -23,11 +23,15 @@ require_once( plugin_dir_path( __FILE__ ) . '/class-bash-it-out-post-routes.php'
  * @namespace Bash_It_Out
  */
 class Plugin {
+	/**
+	 * Constants
+	 */
 	const PLUGIN_VERSION   = '1.0.0';
 	const MIN_WP_VERSION   = '4.7';
 	const PLUGIN_NAME      = 'Bash It Out';
 	const PLUGIN_SLUG      = 'bash-it-out';
 	const WINDOW_NAMESPACE = 'bashItOut';
+
 	/**
 	 * Init
 	 */
@@ -51,20 +55,7 @@ class Plugin {
 	 * Get instance
 	 */
 	public function __construct() {
-		$this->add_taxonomy();
 		$this->add_hooks();
-	}
-
-	/**
-	 * Register custom post tag
-	 */
-	private function add_taxonomy() {
-		$tag_data = get_term_by( 'name', static::PLUGIN_NAME, 'post_tag' );
-		if ( ! $tag_data ) {
-			$tag_data = wp_insert_term( static::PLUGIN_NAME, 'post_tag' );
-		}
-		$this->tag_id   = $tag_data->term_id;
-		$this->tag_slug = $tag_data->slug;
 	}
 
 	/**
@@ -76,9 +67,7 @@ class Plugin {
 			add_action('admin_menu', array($this, 'register_admin_menu'), 10, 3);
 		}
 
-		if (isset($this->tag_id)) {
-			$this->rest_controller = new Post_Routes($this->tag_id);
-		}
+		$this->rest_controller = new Post_Routes( static::PLUGIN_NAME );
 	}
 
 	/**
@@ -109,9 +98,8 @@ class Plugin {
 			'PLUGIN_NAME'           => static::PLUGIN_NAME,
 			'PLUGIN_VERSION'        => static::PLUGIN_VERSION,
 			'REST_URL'              => esc_url_raw( rest_url() ),
-			'PLUGIN_REST_URL'       => esc_url_raw( rest_url() . Post_Routes::REST_NAMESPACE ),
+			'PLUGIN_REST_BASE'       => esc_url_raw( rest_url() . Post_Routes::REST_NAMESPACE . Post_Routes::REST_BASE ),
 			'PLUGIN_SLUG'           => static::PLUGIN_SLUG,
-			'TAG_ID'                => $this->tag_id,
 			'nonce'                 => wp_create_nonce( 'wp_rest' ),
 		);
 		wp_localize_script( 'bash-it-out-js', static::WINDOW_NAMESPACE, $js_variables );

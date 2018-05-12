@@ -41,24 +41,28 @@
 		</fieldset>
 		<?php
 		if ( method_exists('Bash_It_Out\Plugin', 'get_saved_posts' ) ) {
-			$posts_query = Bash_It_Out\Plugin::get_saved_posts();
-			if ( $posts_query->have_posts() ) {
-				?>
-				<fieldset>
-					<label class="bash-it-out__field-container" for="bash-it-out-saved-posts">
-						<span class="bash-it-out__label-text bash-it-out__label-group">Load a previously bashed-out post</span>
-						<select name="bash-it-out-saved-posts" id="bash-it-out-saved-posts" >
-							<?php while ( $posts_query->have_posts() ) : $posts_query->the_post(); ?>
-								<option value="<?php echo get_the_id(); ?>"><?php echo get_the_title(); ?></option>
-							<?php endwhile; ?>
-						</select>
-					</label>
-					<button type="button" class="bash-it-out__load-post button button-secondary button-small">
-						Load post into editor
-					</button>
-				</fieldset>
-				<?php
-			}
+			$posts = Bash_It_Out\Plugin::get_saved_posts();
+			$has_posts = is_array( $posts ) && ! empty( $posts );
+			$container_class = $has_posts ? '' : 'hidden';
+		?>
+		<fieldset class="bash-it-out__fieldset-saved-posts <?php echo $container_class; ?>">
+			<label class="bash-it-out__field-container" for="bash-it-out-saved-posts">
+				<span class="bash-it-out__label-text bash-it-out__label-group">Load a previously bashed-out post</span>
+				<select name="bash-it-out-saved-posts" id="bash-it-out-saved-posts" >
+					<?php
+					if ( $has_posts ) {
+						foreach( $posts as $post ) { ?>
+							<option value="<?php echo $post[ 'id' ]; ?>"><?php echo $post[ 'title' ]; ?></option>
+						<?php }
+						}
+					?>
+				</select>
+			</label>
+			<button type="button" class="bash-it-out__load-post button button-secondary button-small">
+				Load post into editor
+			</button>
+		</fieldset>
+		<?php
 		}
 		?>
 	</div>
@@ -71,6 +75,7 @@
 	</div>
 
 	<div class="bash-it-out__editor-container">
+		<h3 class="bash-it-out__current-post-title"></h3>
 		<?php
 			// see: https://developer.wordpress.org/reference/functions/wp_editor/
 			$content   = '';
