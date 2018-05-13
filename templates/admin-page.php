@@ -1,8 +1,9 @@
 <div class="bash-it-out__container">
+	<img class="bash-it-out__fist" src="<?php echo plugin_dir_url( __FILE__ ) . '../assets/images/bash-it-out.png' ?>" alt="<?php echo get_admin_page_title(); ?>" />
 	<h1>
 		<?php echo get_admin_page_title(); ?>
 	</h1>
-	<p>Can't reach your word count goals? Does writer's block have its craggy hand around the throat of your creativity? Sometimes just bashing something out is the answer. Set your word count goal below, along with a time limit and let your fingers fly. Your editor will remind you should you falter. Happy writing!</p>
+	<p> Can't reach your word count goals? Does writer's block have its craggy hand around the throat of your creativity? Sometimes just bashing something out is the answer. Set your word count goal below, along with a time limit and let your fingers fly. Your editor will remind you should you falter. Happy writing!</p>
 	<p>Every time you bash one out, it creates a new draft post with the tag <strong><?php echo get_admin_page_title(); ?></strong>. Your work will be autosaved every 10 seconds.</p>
 	<div class="bash-it-out__settings">
 		<fieldset>

@@ -12,6 +12,13 @@
 .bash-it-out__container.bash-it-out__annoy {}
 .bash-it-out__container.bash-it-out__editor-active {}
 
+.bash-it-out__fist {
+	display: inline-block;
+	max-width: 70px;
+	float: left;
+	margin: 0 10px 20px 0;
+}
+
 /**
 * #.# Settings form
 *
