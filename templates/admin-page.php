@@ -97,6 +97,7 @@
 			);
 			wp_editor( $content, $editor_id, $settings );
 		?>
+		<img class="bash-it-out__editor" src="<?php echo plugin_dir_url( __FILE__ ) . '../assets/images/editor.png' ?>" alt="Editor says: You stopped writing!" />
 	</div>
 
 	<div class="bash-it-out__overseer">

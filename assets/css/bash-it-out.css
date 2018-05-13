@@ -141,6 +141,23 @@
 	display: block;
 }
 
+.bash-it-out__editor {
+	display: none;
+	position: absolute;
+	top: 50px;
+	right: -50px
+}
+
+@keyframes fadein {
+	from { opacity: 0; }
+	to   { opacity: 1; }
+}
+
+.bash-it-out__annoy .bash-it-out__editor {
+	display: block;
+	animation: fadein 2s;;
+}
+
 .bash-it-out__overseer-container {
 	display: flex;
 	flex-wrap: nowrap;
