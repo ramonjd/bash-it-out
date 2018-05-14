@@ -92,6 +92,7 @@ class Plugin {
 	 * Load clientside assets and assign window variables
 	 */
 	public function enqueue_clientside_assets() {
+		wp_enqueue_script( 'bash-it-out-countdown-js', plugin_dir_url( __FILE__ ) . 'assets/js/bash-it-out-countdown.js', null, true );
 		wp_enqueue_script( 'bash-it-out-js', plugin_dir_url( __FILE__ ) . 'assets/js/bash-it-out.js', array( 'jquery' ), '1.0', true );
 		wp_enqueue_style( 'bash-it-out-css', plugin_dir_url( __FILE__ ) . 'assets/css/bash-it-out.css', null, '1.0', 'all' );
 		$js_variables = array(
@@ -102,7 +103,7 @@ class Plugin {
 			'PLUGIN_SLUG'           => static::PLUGIN_SLUG,
 			'nonce'                 => wp_create_nonce( 'wp_rest' ),
 		);
-		wp_localize_script( 'bash-it-out-js', static::WINDOW_NAMESPACE, $js_variables );
+		wp_localize_script( 'bash-it-out-countdown-js', static::WINDOW_NAMESPACE, $js_variables );
 	}
 
 	/**

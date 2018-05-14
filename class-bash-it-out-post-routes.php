@@ -126,7 +126,7 @@ class Post_Routes extends \WP_REST_Controller {
 		if ( isset( $title ) && ! empty( $title ) ) {
 			$title = wp_filter_nohtml_kses( sanitize_text_field( $title ) );
 		} else {
-			$title = $this->plugin_name . ': ' .  $date = date('l, F j, Y H:i:s');
+			$title = date('H:i:s, l, F j, Y') . ' - ' . $this->plugin_name;
 		}
 
 		$content = $request->get_param( 'content' );

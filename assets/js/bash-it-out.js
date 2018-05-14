@@ -13,6 +13,11 @@
 			return;
 		}
 
+		if ( typeof _bio.Countdown !== 'object' ) {
+			log( 'Dependency `_bio.Countdown` not found', 'error' );
+			return;
+		}
+
 		// only run the script on the admin page
 		if ( ! isAdminPageActive() ) {
 			return;
@@ -28,8 +33,6 @@
 		 */
 		var wordCountGoal = 0;
 		var writingTime = 0;
-		var countDownTimer = null;
-		var currentPostData = null;
 		var autoSave = false;
 		var autoSaveTimeout = null;
 		var hasReachedWordGoal = false;
@@ -69,6 +72,36 @@
 		var $progressBar = $( '.bash-it-out__progressbar' );
 
 		/*
+			current post state management
+		 */
+		var currentPostData = null;
+
+		/**
+		 * Assigns new values to currentPostData
+		 * @param newState {object} new state values
+		 * @returns {object}
+		 */
+		function setCurrentPostData( newState ) {
+			return $.extend( {}, currentPostData, newState );
+		}
+
+		/**
+		 * Returns default values of currentPostData
+		 * @returns {object}
+		 */
+		function getInitialCurrentPostData() {
+			return {
+				id: null,
+				title: 'Waiting to bash a new one out...',
+				date: null,
+				link: null,
+				content: null,
+				modified: null,
+				wordCount: null,
+			};
+		}
+
+		/*
 			Event handlers
 		 */
 		function onStartButtonClick( event ) {
@@ -82,7 +115,8 @@
 			autoSave = true;
 			baseWordCount = getWordCount();
 
-			if ( currentPostData && currentPostData.id ) {
+			if ( currentPostData.id ) {
+				currentPostData.wordCount = baseWordCount;
 				updatePost();
 			} else {
 				createNewPost();
@@ -90,9 +124,9 @@
 
 			$container.addClass( 'bash-it-out__editor-active' );
 			setWordCountValues();
-			countDownTimer.set( parseInt( writingTime ) );
-			$overseerTimeRemaining.text( countDownTimer.getClock() );
-			countDownTimer.start();
+			_bio.Countdown.set( parseInt( writingTime ) );
+			$overseerTimeRemaining.text( _bio.Countdown.getClock() );
+			_bio.Countdown.start();
 			$settingsBoxFields.attr( 'disabled', true );
 		}
 
@@ -101,12 +135,13 @@
 		 * @returns undefined
 		 */
 		function onOverseerQuitClick() {
-			countDownTimer.stop();
+			_bio.Countdown.stop();
 			$container.attr('class', 'bash-it-out__container' );
 			$settingsBoxFields.attr( 'disabled', false );
 			autoSave = false;
 			$overseerWordsRemaining.text( '' );
 			$overseerTimeRemaining.text( '' );
+			setWordCountValues();
 			clearTimeout( pressureTimeout );
 		}
 
@@ -116,7 +151,7 @@
 		 */
 		function onLoadPostClick() {
 			var postId = parseInt( $savedPostsField.val() );
-			if ( currentPostData && ( currentPostData.id === postId ) ) {
+			if ( currentPostData.id === postId ) {
 				log( 'This post is already loaded', 'warn' );
 				return false;
 			}
@@ -124,9 +159,9 @@
 			getPosts( postId )
 				.then( function( response ) {
 					toggleLoading( false );
-					currentPostData = response[ 0 ];
-					$currentPostTitle.text( currentPostData.title );
+					currentPostData = setCurrentPostData( response[ 0 ] );
 					$editorTextArea.val( currentPostData.content );
+					setWordCountValues();
 				} );
 		}
 
@@ -136,7 +171,7 @@
 		 */
 		function onResetClick() {
 			cancelAutoSave();
-			if ( currentPostData ) {
+			if ( currentPostData.id ) {
 				toggleLoading();
 				updatePost()
 					.then( onResetClickCallback );
@@ -153,13 +188,13 @@
 		 * @returns undefined
 		 */
 		function onOverseerPauseClick() {
-			var pausedState = countDownTimer.toggle();
+			var pausedState = _bio.Countdown.toggle();
 			if ( pausedState === true ) {
+				clearTimeout( pressureTimeout );
 				$overseerPauseButtonText.text( 'Resume' );
 				$container
 					.addClass( 'bash-it-out__paused' )
 					.removeClass( 'bash-it-out__annoy' );
-				clearTimeout( pressureTimeout );
 			} else {
 				$overseerPauseButtonText.text( 'Pause' );
 				$container.removeClass( 'bash-it-out__paused' );
@@ -197,10 +232,11 @@
 			// TODO: easter egg track key strokes
 			clearTimeout( pressureTimeout );
 			$container.removeClass( 'bash-it-out__annoy' );
-			if ( ! hasReachedWordGoal ) {
+			if ( ! _bio.Countdown.isPaused() && ! hasReachedWordGoal && isInWritingMode() ) {
 				startPressureTimer();
 			}
-			if ( ! autoSave ) {
+			if ( ! autoSave && ! isInWritingMode() && currentPostData.id ) {
+				updatePost();
 				autoSave = true;
 			}
 		}
@@ -226,6 +262,8 @@
 		 */
 		function setWordCountValues() {
 			var wordCount = getWordCount();
+			currentPostData = setCurrentPostData( { wordCount: wordCount } );
+			$currentPostTitle.text( currentPostData.title + ' (' + currentPostData.wordCount + ' words)' );
 			wordCount = wordCount - baseWordCount;
 			$overseerWordsRemaining.text( wordCount + '/' + wordCountGoal );
 			checkStatusWordCountStatus( wordCount );
@@ -248,8 +286,8 @@
 				.fadeOut( function(){
 					$resetAutoSave.html( '' );
 				} );
-			currentPostData = null;
-			$currentPostTitle.text( 'Waiting to bash a new one out...' );
+			currentPostData = getInitialCurrentPostData();
+			setWordCountValues();
 		}
 
 		/**
@@ -287,7 +325,7 @@
 		 * @returns undefined
 		 */
 		function onWordGoalCompleted() {
-			countDownTimer.stop();
+			_bio.Countdown.stop();
 			autoSave = false;
 			clearTimeout( pressureTimeout );
 			$container.addClass( 'bash-it-out__complete' );
@@ -310,7 +348,7 @@
 		 * @returns {boolean} whether the word count as been reached
 		 */
 		function checkStatusWordCountStatus ( currentWordCount ) {
-			if ( currentWordCount >= wordCountGoal ) {
+			if ( currentWordCount >= wordCountGoal && isInWritingMode() ) {
 				if ( hasReachedWordGoal === false ) {
 					hasReachedWordGoal = true;
 					onWordGoalCompleted();
@@ -421,12 +459,12 @@
 				},
 				success : function( response ) {
 					if ( ! response ) {
-						countDownTimer.stop();
+						_bio.Countdown.stop();
 						//TODO: show error in UI
 					}
 
-					currentPostData = response[ 0 ];
-					$currentPostTitle.text( currentPostData.title );
+					currentPostData = setCurrentPostData( response[ 0 ] );
+					$currentPostTitle.text( currentPostData.title + ' (' + currentPostData.wordCount + ' words)' );
 
 					if ( autoSave === true ) {
 						triggerAutoSave();
@@ -441,7 +479,7 @@
 				error: function( error ) {
 					log( error, 'error' );
 					autoSave === false;
-					countDownTimer.stop();
+					_bio.Countdown.stop();
 					if ( $.type( callback ) === 'function' ) {
 						callback( error );
 					}
@@ -457,7 +495,7 @@
 		 * @returns {number} word count in editor textarea
 		 */
 		function triggerAutoSave() {
-			if ( isAdminPageActive() ) {
+			if ( isAdminPageActive() & currentPostData.id ) {
 				clearTimeout( autoSaveTimeout );
 				autoSaveTimeout = setTimeout( updatePost, AUTO_SAVE_INTERVAL );
 			}
@@ -474,6 +512,14 @@
 		}
 
 		/**
+		 * Checks if the editor is in writing mode
+		 * @returns {boolean}
+		 */
+		function isInWritingMode() {
+			return $container.hasClass( 'bash-it-out__editor-active' );
+		}
+
+		/**
 		 * Checks if we're on the admin page and cancels all timeouts if not
 		 * @returns {boolean} if we're on the page
 		 */
@@ -482,7 +528,7 @@
 			if ( $identifier.length < 1 ) {
 				// We're no longer on the page Toto
 				cancelAutoSave();
-				countDownTimer && countDownTimer.stop();
+				_bio.Countdown.stop();
 				return false;
 			}
 			return true;
@@ -502,136 +548,6 @@
 		}
 
 		/*
-			Countdown
-			1 min : 60s
-			30 min : 1800s
-			1 hour : 3600s
-		*/
-		function Countdown( onComplete, onTick ) {
-			var timerInterval = 1000;
-			var complete = false;
-			// duration is in seconds
-			var duration = 1800;
-			var countdown = 0;
-			var clock = '00:00:00';
-			var end = '';
-			// in milliseconds
-			var s = 1000;
-			var m = s * 60;
-			var h = m * 60;
-			var d = h * 24;
-			var timer;
-			var divider = ':';
-			var now;
-			var distance;
-			var paused = true;
-
-			function reset() {
-				clock = '00:00:00';
-				stop();
-				return clock;
-			}
-
-			function pad( n ) {
-				n = parseInt( n, null );
-				return ( n < 10 && n >= 0 ) ? ( '0' + n ) : n;
-			}
-
-			function getCompletedTimePercentage( current, duration ) {
-				var seconds = current / 1000;
-				return 100 - Math.floor( seconds / duration * 100 );
-			}
-
-			function set( newDurationInMinutes ) {
-				if ( newDurationInMinutes ) {
-					duration = newDurationInMinutes * 60;
-				}
-				// set out seconds countdown to track seconds
-				// let's add one second to account for the first setInterval delay
-				countdown = duration + 1;
-
-				var durationInMilliseconds = duration * 1000;
-				clock = [
-					pad( Math.floor( ( durationInMilliseconds % d ) / h ) ),
-					pad( Math.floor( ( durationInMilliseconds % h ) / m ) ),
-					pad( Math.floor( ( durationInMilliseconds % m ) / s ) )
-				].join( divider );
-			}
-
-			function start() {
-				end = new Date();
-				// add selected seconds to current time
-				end.setSeconds( end.getSeconds() + countdown );
-				timer = setInterval( render, timerInterval );
-				paused = false;
-			}
-
-			function render() {
-				now = new Date();
-				distance = end.getTime() - now.getTime();
-
-				if ( distance < 0 ) {
-					reset();
-					onComplete();
-					return false;
-				}
-
-				// key
-				// day =  Math.floor(distance / d);
-				// hour = Math.floor((distance % d) / h);
-				// min = Math.floor((distance % h) / m);
-				// sec = Math.floor((distance % m) / s);
-				clock = [
-					pad( Math.floor( ( distance % d ) / h ) ),
-					pad( Math.floor( ( distance % h ) / m ) ),
-					pad( Math.floor( ( distance % m ) / s ) )
-				].join( divider );
-
-				countdown--;
-
-				onTick( {
-					clock: clock,
-					percentage: getCompletedTimePercentage( distance, duration )
-				} );
-			}
-
-			function pause() {
-				clearInterval( timer );
-				paused = true;
-			}
-
-			function stop() {
-				complete = true;
-				clearInterval( timer );
-				paused === true;
-			}
-
-			function toggle() {
-				if ( paused === true ) {
-					start();
-				} else {
-					pause();
-				}
-				return paused;
-			}
-
-			return {
-				start: start,
-				pause: pause,
-				stop: stop,
-				toggle: toggle,
-				set: set,
-				reset: reset,
-				getClock: function() {
-					return clock;
-				},
-				isPaused: function() {
-					return paused;
-				}
-			};
-		}
-
-		/*
 			Init
 		 */
 		// TODO: Get info on saved posts to display in dropdown https://developer.wordpress.org/plugins/javascript/heartbeat-api/
@@ -644,13 +560,9 @@
 		$overseerQuitButton.on( 'click', onOverseerQuitClick );
 		$overseerPauseButton.on( 'click', onOverseerPauseClick );
 		$settingsBoxResetButton.on( 'click', onResetClick );
-
 		$editorTextArea.on( 'keyup', onEditorTextAreaKeyUp );
-
-		countDownTimer = Countdown( onCountdownComplete, onCountdownTick );
-
-		$currentPostTitle.text( 'Waiting to bash a new one out...' );
-
-
+		_bio.Countdown.init( onCountdownComplete, onCountdownTick );
+		currentPostData = getInitialCurrentPostData();
+		$currentPostTitle.text( currentPostData.title );
 	} );
 }( jQuery, window.bashItOut ) );

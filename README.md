@@ -8,11 +8,11 @@ A WordPress plugin providing the slovenly with a countdown to pressure them into
 
 Set a word goal, writing time, how often you want to be nagged and then **bash it out**!
 
-![Bash It Out Editor Home](assets/images/screenshot-bash-it-out-home.png)
+![Bash It Out Editor Home](assets/screenshot-1.png)
 
 Your work is auto-saved to draft posts! 
 
-![Bash It Out Editor](assets/images/screenshot-bash-it-out-editor.png)
+![Bash It Out Editor](assets/screenshot-2.png)
 
 ## Changelog
 
