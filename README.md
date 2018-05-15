@@ -2,13 +2,17 @@
 
 Version _1.0.0_
 
-A WordPress plugin providing the slovenly with a countdown to pressure them into bashing out that word count.
+A simple WordPress plugin that provides the slovenly with the overbearing pressure they need to bash out that word count.
 
-Set a word goal, writing time, how often you want to be nagged and then **bash it out**!
+Set a word goal, writing time limit, how often you want to be nagged and then **bash it out**! Reach your word count goal before the count down! Impress your cat!
 
 ![Bash It Out Editor Home](assets/screenshot-3.png)
 
-Your work is auto-saved to draft posts! 
+![Bash It Out Editor Home](assets/screenshot-2.png)
+
+![Bash It Out Editor Home](assets/screenshot-1.png)
+
+Your work is auto-saved to draft posts, which you can come back and keep bashing whenever you like.
 
 ## Changelog
 
@@ -16,4 +20,6 @@ Your work is auto-saved to draft posts!
 
 ## TODO
 
-- [ ] Add art to pressure functionality
+- [ ] Add art to complete functionality
+- [ ] Add unit tests?
+

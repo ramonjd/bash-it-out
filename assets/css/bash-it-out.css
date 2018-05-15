@@ -1,9 +1,17 @@
 /* =Bash It Out plugin styles
 -------------------------------------------------------------- */
 
+/**
+* #.# General styles and layout
+**/
 .bash-it-out__container {
 	margin:	20px 40px;
 	box-sizing: border-box;
+	display: flex;
+	flex-wrap: nowrap;
+	justify-content: center;
+	align-items: flex-start;
+	position: relative;
 }
 /* The states of the app: */
 .bash-it-out__container.bash-it-out__paused {}
@@ -19,6 +27,39 @@
 	margin: 0 10px 20px 0;
 }
 
+.bash-it-out__sidebar {
+	display: block;
+	order: 1;
+	flex-basis: 30%;
+	margin: 0 20px;
+	padding: 20px;
+	box-sizing: border-box;
+}
+
+.bash-it-out__editor-container {
+	display: block;
+	order: 0;
+	flex-basis: 70%;
+	box-sizing: border-box;
+}
+
+/* Settings block mobile device breakpoint */
+@media all and ( max-width: 782px ) {
+	.bash-it-out__container {
+		flex-direction: column;
+	}
+
+	.bash-it-out__editor-container {
+		order: 1;
+		width: 100%;
+	}
+
+	.bash-it-out__sidebar {
+		order: 0;
+		margin: 0;
+	}
+}
+
 /**
 * #.# Settings form
 *
@@ -26,22 +67,20 @@
 */
 .bash-it-out__settings {
 	margin-bottom: 15px;
-	padding: 10px 10px 0 10px;
-	border: 1px solid #aaa;
+	padding: 10px;
+	border: 1px solid #bbb;
+	border-bottom-color: #aaa;
+	border-right-color: #aaa;
 	box-sizing: border-box;
 	background: #ccc;
-}
-
-.bash-it-out__settings fieldset {
 	display: block;
-	margin-bottom: 10px;
-	border: 1px solid #bbb;
-	padding: 10px;
+	clear: both;
 }
 
+.bash-it-out__fieldset-saved-posts label,
 .bash-it-out__settings label {
-	display: inline-block;
-	margin-right: 15px;
+	display: block;
+	margin-bottom: 15px;
 }
 
 .bash-it-out__label-text {
@@ -52,14 +91,29 @@
 	margin: 0;
 }
 
+.bash-it-out__fieldset-saved-posts select,
+.bash-it-out__fieldset-saved-posts button,
+.bash-it-out__settings input,
+.bash-it-out__settings button,
+.bash-it-out__settings select {
+	width: 100%;
+	display: block;
+}
+
+.bash-it-out__settings .button.bash-it-out__start {
+	font-size: 14px;
+	height: 50px;
+}
+
 .bash-it-out__tooltip {
 	position: relative;
 	display: inline-block;
+	line-height: 1.4;
 }
 
 .bash-it-out__tooltip-content {
 	position: absolute;
-	width: 200px;
+	width: 180px;
 	margin: 0;
 	padding: 10px;
 	background: #fff;
@@ -69,6 +123,7 @@
 	font-family: inherit;
 	z-index:10005;
 	border: 1px solid #aaa;
+	left: -90px;
 }
 
 .bash-it-out__tooltip:hover .bash-it-out__tooltip-content,
@@ -81,50 +136,34 @@
 }
 
 .bash-it-out__label-group {
-	display: inline-block;
+	display: block;
 }
 
 .bash-it-out__fieldset-saved-post {
 	text-align: right;
 }
 
-.bash-it-out__fieldset-saved-posts .bash-it-out__load-post,
-.bash-it-out__fieldset-saved-posts select,
 .bash-it-out__fieldset-saved-posts {
-	font-size: 11px;
+	width: 100%;
 }
 
 .bash-it-out__fieldset-saved-posts.hidden {
 	display: none;
 }
 
+/* Settings block mobile device breakpoint */
 @media all and ( max-width: 782px ) {
-	.bash-it-out__settings label {
-		display: block;
+	.bash-it-out__settings {
 		margin-bottom: 15px;
-		margin-right: 0;
 	}
 
-	.bash-it-out__settings select {
-		width: 90%;
-		display: block;
-		margin-bottom: 20px;
+	.bash-it-out__fieldset-saved-posts {
+		font-size: inherit;
 	}
 
-	.bash-it-out__label-group {
-		display: block;
+	.bash-it-out__settings .button-large .dashicons {
+		line-height: 1;
 	}
-}
-
-.bash-it-out__reset-container {
-	text-align: right;
-	margin-bottom: 20px;
-	font-size: 10px;
-}
-
-.bash-it-out__reset-container span {
-	vertical-align: middle;
-	display: inline-block;
 }
 
 /**
@@ -137,10 +176,13 @@
 	display: none;
 	z-index: 10003;
 	position: relative;
-	width: 90%;
+	width: 100%;
 	left: auto;
 	padding: 20px 15px;
 	box-sizing: border-box;
+	position: absolute;
+	height: 100px;
+	bottom: -100px;
 }
 
 .bash-it-out__complete .bash-it-out__overseer {
@@ -215,10 +257,58 @@
 	top: 0;
 }
 
+/* Overseer block mobile device breakpoint */
 @media all and ( max-width: 782px ) {
-	.bash-it-out__editor {
-		top: 150px;
-		max-width: 175px;
+	.bash-it-out__overseer {
+		height: 130px;
+		bottom: -130px;
+	}
+
+	.bash-it-out__time-remaining {
+		margin: 15px 0;
+	}
+
+	.bash-it-out__overseer .bash-it-out__overseer-quit.button,
+	.bash-it-out__overseer .bash-it-out__overseer-pause.button {
+		height: auto;
+		padding: 10px;
+		font-size: 16px;
+	}
+
+	.bash-it-out__overseer-container {
+		flex-wrap: wrap;
+	}
+
+	.bash-it-out__overseer-column {
+		flex-basis: auto;
+		flex: 1;
+	}
+
+	.bash-it-out__overseer-column:nth-child( 1 ) {
+		order: 4;
+		display: none;
+	}
+
+	.bash-it-out__overseer-column:nth-child( 2 ) {
+		order: 2;
+		flex: 100%;
+	}
+
+	.bash-it-out__overseer-column:nth-child( 2 ) h3 {
+		display: none;
+	}
+
+	.bash-it-out__overseer-column:nth-child( 3 ) {
+		order: 3;
+		display: none;
+	}
+
+	.bash-it-out__overseer-column:nth-child( 4 ) {
+		order: 0;
+	}
+
+	.bash-it-out__overseer-column:nth-child( 5 ) {
+		order: 1;
 	}
 }
 
@@ -227,28 +317,57 @@
 *
 * The editor's text area
 */
-.bash-it-out__editor-container {
-	display: block;
-}
-
 .bash-it-out__editor-active .bash-it-out__editor-container {
-	position: relative;
 	width: 90%;
 	z-index: 10002;
 	box-sizing: border-box;
+	position: absolute;
 }
 
 .bash-it-out__editor-active .bash-it-out__current-post-title {
 	background: white;
 	padding: 10px;
 	margin: 0;
+	line-height: 1.2;
 }
 
-.bash-it-out__annoying-editor {
+.bash-it-out__editor-active .bash-it-out__reset-container {
+	display: none;
+}
+
+.bash-it-out__reset-container {
+	text-align: right;
+	margin-bottom: 20px;
+	font-size: 11px;
+}
+
+.bash-it-out__reset-container span {
+	vertical-align: middle;
+	display: inline-block;
+}
+
+/* Editor images */
+.bash-it-out__annoying-editor,
+.bash-it-out__happy-editor {
 	display: none;
 	position: absolute;
-	top: 50px;
-	max-width: 250px;
+	top: -50px;
+	transform: scale( 0.8 );
+}
+
+.bash-it-out__annoy .bash-it-out__annoying-editor {
+	display: block;
+	animation: barge-in 0.5s;
+	animation-fill-mode: forwards;
+	animation-iteration-count: 1;
+}
+
+.bash-it-out__complete .bash-it-out__happy-editor {
+	display: block;
+	animation: barge-in-and-bulge .5s;
+	animation-fill-mode: forwards;
+	animation-iteration-count: 1;
+	right: -80px;
 }
 
 @keyframes barge-in {
@@ -262,12 +381,30 @@
 	}
 }
 
-.bash-it-out__annoy .bash-it-out__annoying-editor {
-	display: block;
-	animation: barge-in 0.5s;
-	animation-fill-mode: forwards;
+@keyframes barge-in-and-bulge {
+	0% {
+		transform: scale( 0.8 );
+	}
+	50% {
+		transform: scale( 1 );
+	}
+	100% {
+		transform: scale( 0.8 );
+	}
 }
 
+/* Editor block mobile device breakpoint */
+@media all and ( max-width: 782px ) {
+	.bash-it-out__reset-container,
+	.bash-it-out__reset-container button {
+		width: 100%;
+	}
+
+	.bash-it-out__annoying-editor,
+	.bash-it-out__happy-editor {
+		max-width: 200px;
+	}
+}
 
 /**
 * #.# Background styles

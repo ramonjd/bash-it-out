@@ -1,6 +1,6 @@
 <?php
 /**
- * Plugin Name
+ * Bash It Out
  *
  * @package     Bash_It_Out
  *
@@ -20,7 +20,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-require_once( plugin_dir_path( __FILE__ ) . '/class-bash-it-out-plugin.php' );
+require_once plugin_dir_path( __FILE__ ) . '/class-plugin.php';
 
 add_action( 'plugins_loaded', array( 'Bash_It_Out\Plugin', 'init' ) );
 

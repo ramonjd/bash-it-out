@@ -26,14 +26,14 @@ class Post_Routes extends \WP_REST_Controller {
 	 * Constants
 	 */
 	const REST_NAMESPACE = 'bash-it-out/v1/';
-	const REST_BASE = 'posts';
+	const REST_BASE      = 'posts';
 
 	/**
 	 * Category_List_Rest constructor.
 	 *
-	 * @param {string} $plugin_name name of plugin
+	 * @param {string} $plugin_name name of plugin.
 	 */
-	public function __construct( string $plugin_name ) {
+	public function __construct( $plugin_name ) {
 		if ( empty( $plugin_name ) ) {
 			return new WP_Error( 'rest_controller', esc_html__( 'Correct arguments not found' ) );
 		}
@@ -57,21 +57,21 @@ class Post_Routes extends \WP_REST_Controller {
 				'permission_callback' => array( $this, 'permissions_check' ),
 				'args'                => $this->get_endpoint_args_for_item_schema( \WP_REST_Server::CREATABLE ),
 			),
- 			'schema' => array( $this, 'get_public_item_schema' ),
+			'schema' => array( $this, 'get_public_item_schema' ),
 		) );
 
 		register_rest_route( static::REST_NAMESPACE, static::REST_BASE . '/(?P<id>[0-9]+)', array(
 			array(
-				'methods'         => \WP_REST_Server::READABLE,
-				'callback'        => array( $this, 'get_post' ),
+				'methods'             => \WP_REST_Server::READABLE,
+				'callback'            => array( $this, 'get_post' ),
 				'permission_callback' => array( $this, 'permissions_check' ),
-				'args'     => array(
-					'id' => array(
+				'args'                => array(
+					'id'      => array(
 						'description'       => esc_html__( 'The id of the post' ),
 						'type'              => 'integer',
 						'validate_callback' => function( $param ) {
 							return is_numeric( $param );
-						}
+						},
 					),
 					'content' => array(
 						'description'       => esc_html__( 'The content of the post' ),
@@ -81,7 +81,7 @@ class Post_Routes extends \WP_REST_Controller {
 						},
 						'sanitize_callback' => function( $value, $request, $param ) {
 							return sanitize_text_field( $value );
-						}
+						},
 					),
 				),
 			),
@@ -100,7 +100,7 @@ class Post_Routes extends \WP_REST_Controller {
 	 * @param {WP_REST_Request} $request Full data about the request.
 	 * @return {WP_Error|WP_REST_Response}
 	 */
-	public function get_posts( \WP_REST_Request $request ) {
+	public function get_posts( $request ) {
 		return $this->get_saved_posts();
 	}
 
@@ -110,7 +110,7 @@ class Post_Routes extends \WP_REST_Controller {
 	 * @param {WP_REST_Request} $request Full data about the request.
 	 * @return {WP_Error|WP_REST_Response}
 	 */
-	public function get_post( \WP_REST_Request $request ) {
+	public function get_post( $request ) {
 		return $this->get_saved_posts( $request->get_param( 'id' ) );
 	}
 
@@ -119,14 +119,14 @@ class Post_Routes extends \WP_REST_Controller {
 	 * See: https://developer.wordpress.org/reference/functions/wp_insert_post/
 	 *
 	 * @param {WP_REST_Request} $request Full data about the request.
-	 * @return {array|int}
+	 * @return {array|WP_Error}
 	 */
-	public function create_post( \WP_REST_Request $request ) {
+	public function create_post( $request ) {
 		$title = $request->get_param( 'title' );
 		if ( isset( $title ) && ! empty( $title ) ) {
 			$title = wp_filter_nohtml_kses( sanitize_text_field( $title ) );
 		} else {
-			$title = date('H:i:s, l, F j, Y') . ' - ' . $this->plugin_name;
+			$title = date( 'H:i:s, l, F j, Y' ) . ' - ' . $this->plugin_name;
 		}
 
 		$content = $request->get_param( 'content' );
@@ -135,15 +135,19 @@ class Post_Routes extends \WP_REST_Controller {
 			return new \WP_Error( 'malformed_request', 'The post could not be updated due to some bad parameters', array( 'status' => 400 ) );
 		}
 
-		$user_id = get_current_user_id();
+		$user_id   = get_current_user_id();
 		$post_args = array(
-			'post_author'     => $user_id,
-			'post_title'      => $title,
-			'post_content'    => $content,
-			'post_status'     => 'draft',
-			'comment_status'  => 'closed',
+			'post_author'    => $user_id,
+			'post_title'     => $title,
+			'post_content'   => $content,
+			'post_status'    => 'draft',
+			'comment_status' => 'closed',
 		);
-		$result = wp_insert_post( $post_args );
+		$result    = wp_insert_post( $post_args );
+
+		if ( is_wp_error( $result ) ) {
+			return $result;
+		}
 
 		// If the result is a post ID.
 		if ( is_numeric( $result ) ) {
@@ -151,7 +155,8 @@ class Post_Routes extends \WP_REST_Controller {
 			wp_set_post_tags( $result, $this->plugin_name, true );
 			return $this->normalize_posts_return_value( array( get_post( $result ) ) );
 		}
-		return $result;
+
+		return new \WP_Error( 'wp_insert_post', 'The post could not be created. There was no ID in the response.', array( 'status' => 404 ) );
 	}
 
 	/**
@@ -159,10 +164,10 @@ class Post_Routes extends \WP_REST_Controller {
 	 * See: https://developer.wordpress.org/reference/functions/wp_update_post/
 	 *
 	 * @param {WP_REST_Request} $request Full data about the request.
-	 * @return {array|int}
+	 * @return {array|WP_Error}
 	 */
-	public function update_post( \WP_REST_Request $request ) {
-		$id = $request->get_param( 'id' );
+	public function update_post( $request ) {
+		$id      = $request->get_param( 'id' );
 		$content = $request->get_param( 'content' );
 
 		if ( ! isset( $content ) || ! isset( $id ) ) {
@@ -173,14 +178,14 @@ class Post_Routes extends \WP_REST_Controller {
 			'ID'           => $id,
 			'post_content' => $content,
 		);
-		$result = wp_update_post( $post_args );
+		$result    = wp_update_post( $post_args );
 
-		if ( is_wp_error( $result )  ) {
+		if ( is_wp_error( $result ) ) {
 			return $result;
 		}
 
-		// If the result is a post ID
-		if ( is_numeric( $result ) && $result !== 0 ) {
+		// If the result is a post ID.
+		if ( 0 !== is_numeric( $result ) && $result ) {
 			return $this->normalize_posts_return_value( array( get_post( $result ) ) );
 		}
 
@@ -190,7 +195,6 @@ class Post_Routes extends \WP_REST_Controller {
 	/**
 	 * Check if a given request has access to get items
 	 *
-	 * @param {WP_REST_Request} $request Full data about the request.
 	 * @return {WP_Error|bool}
 	 */
 	public function permissions_check() {
@@ -200,18 +204,18 @@ class Post_Routes extends \WP_REST_Controller {
 	/**
 	 * Gets all posts with our tag
 	 *
-	 * @param {array} $posts an array of posts return from WP_Query
+	 * @param {array} $posts an array of posts return from WP_Query.
 	 * @return {array} normalized response
 	 */
 	private function normalize_posts_return_value( $posts = array() ) {
 		$response = array();
-		foreach( $posts as $post ) {
+		foreach ( $posts as $post ) {
 			array_push($response, array(
-				'content' => $post->post_content,
-				'title' => $post->post_title,
-				'date' => $post->post_date,
-				'id' => $post->ID,
-				'link' => get_permalink( $post->ID ),
+				'content'  => esc_textarea( $post->post_content ),
+				'title'    => $post->post_title,
+				'date'     => $post->post_date,
+				'id'       => $post->ID,
+				'link'     => get_permalink( $post->ID ),
 				'modified' => $post->post_modified,
 			) );
 		}
@@ -221,19 +225,19 @@ class Post_Routes extends \WP_REST_Controller {
 	/**
 	 * Gets all posts with our tag
 	 *
-	 * @param {number|null} $id a post id
-	 * @return {WP_Query} posts with our tag slug
+	 * @param {number|null} $id a post id.
+	 * @return {WP_Query} posts with our tag slug.
 	 */
 	public function get_saved_posts( $id = null ) {
 		$tag_data = get_term_by( 'name', $this->plugin_name, 'post_tag' );
-		$args = array(
+		$args     = array(
 			'tag_id'      => $tag_data->term_id,
 			'post_status' => array( 'draft', 'pending', 'publishing' ),
 			'orderby'     => array(
 				'date' => 'DESC',
 			),
 		);
-		if ( isset(  $id ) ) {
+		if ( isset( $id ) ) {
 			$args = array_merge( $args, array(
 				'p' => $id,
 			)  );

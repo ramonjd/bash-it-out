@@ -37,7 +37,8 @@
 		var autoSaveTimeout = null;
 		var hasReachedWordGoal = false;
 		var pressureTimeout = null;
-		// This represents the word count of a saved post
+		// This is the word count of a saved post.
+		// We don't count this in word goals, and minus its value from any current word count value.
 		var baseWordCount = 0;
 
 		/*
@@ -52,6 +53,7 @@
 		var $overseerPauseButtonText = $( '.bash-it-out__overseer-pause-text' );
 		var $overseerQuitButton = $( '.bash-it-out__overseer-quit' );
 		var $lastAutoSave = $( '.bash-it-out__autosave' );
+		var $happyEditorImage = $( '.bash-it-out__happy-editor' );
 
 		// Settings
 		var $settingsBoxStartButton = $( '.bash-it-out__start' );
@@ -65,7 +67,14 @@
 		var $resetAutoSave = $( '.bash-it-out__reset_autosave' );
 		var $currentPostTitle = $( '.bash-it-out__current-post-title' );
 		var $savedPostsFieldset = $( '.bash-it-out__fieldset-saved-posts' );
-		var $settingsBoxFields = $writingTimeField.add( $savedPostsField, $wordGoalField, $reminderTypeField, $settingsBoxStartButton, $settingsBoxLoadPostButton, $settingsBoxResetButton );
+		var $settingsBoxFields = $writingTimeField.add(
+			$savedPostsField,
+			$wordGoalField,
+			$reminderTypeField,
+			$settingsBoxStartButton,
+			$settingsBoxLoadPostButton,
+			$settingsBoxResetButton
+		);
 
 		// Editor
 		var $editorTextArea = $( '#bash-it-out-editor' );
@@ -106,15 +115,22 @@
 			Event handlers
 		 */
 		function onStartButtonClick() {
-			$( 'html, body' ).animate( {
-				scrollTop: $editorTextAreaContainer.position().top
-			}, 800 );
 			focusEditor();
+
+			// Get the selected values.
+			// TODO: save these settings for next time?
 			writingTime = parseInt( $writingTimeField.val() );
 			wordCountGoal = parseInt( $wordGoalField.val() );
+
+			// Switch autosave on.
 			autoSave = true;
+
+			// How many words are in the editor right now?
+			// No cheating! :(
 			baseWordCount = getWordCount();
 
+			// If we've already loaded a post
+			// update it, otherwise create a new one.
 			if ( currentPostData.id ) {
 				currentPostData.wordCount = baseWordCount;
 				updatePost();
@@ -123,7 +139,7 @@
 			}
 
 			$container.addClass( 'bash-it-out__editor-active' );
-			setWordCountValues();
+			setPostTitleAndWordCountValues();
 			_bio.Countdown.set( parseInt( writingTime ) );
 			$overseerTimeRemaining.text( _bio.Countdown.getClock() );
 			_bio.Countdown.start();
@@ -139,10 +155,14 @@
 			$container.attr('class', 'bash-it-out__container' );
 			$settingsBoxFields.attr( 'disabled', false );
 			autoSave = false;
+			if ( ! $editorTextArea.val().length > 0 ) {
+				cancelAutoSave();
+			}
 			$overseerWordsRemaining.text( '' );
 			$overseerTimeRemaining.text( '' );
-			setWordCountValues();
+			setPostTitleAndWordCountValues();
 			clearTimeout( pressureTimeout );
+			$overseerPauseButtonText.text( 'Pause' );
 		}
 
 		/**
@@ -161,7 +181,7 @@
 					toggleLoading( false );
 					currentPostData = setCurrentPostData( response[ 0 ] );
 					$editorTextArea.val( currentPostData.content );
-					setWordCountValues();
+					setPostTitleAndWordCountValues();
 				} );
 		}
 
@@ -244,16 +264,20 @@
 		 * @returns undefined
 		 */
 		function onEditorTextAreaKeyUp() {
-			setWordCountValues();
+			setPostTitleAndWordCountValues();
 			// TODO: easter egg track key strokes
 			clearTimeout( pressureTimeout );
 			$container.removeClass( 'bash-it-out__annoy' );
+
+			// TODO: start the pressure time immediately after a resume, but not before
+			// the user has started writing for the first time.
 			if ( ! _bio.Countdown.isPaused() && ! hasReachedWordGoal && isInWritingMode() ) {
 				startPressureTimer();
 			}
-			if ( ! autoSave && ! isInWritingMode() && currentPostData.id ) {
-				updatePost();
+
+			if ( ! autoSave && currentPostData.id ) {
 				autoSave = true;
+				updatePost();
 			}
 		}
 
@@ -276,7 +300,7 @@
 		 * Get the word count and displays it to the UI/passes it onto related methods
 		 * @returns undefined
 		 */
-		function setWordCountValues() {
+		function setPostTitleAndWordCountValues() {
 			var wordCount = getWordCount();
 			currentPostData = setCurrentPostData( { wordCount: wordCount } );
 			$currentPostTitle.text( currentPostData.title + ' (' + currentPostData.wordCount + ' words)' );
@@ -300,7 +324,7 @@
 				.fadeOut( function(){
 					$resetAutoSave.html( '' );
 				} );
-			setWordCountValues();
+			setPostTitleAndWordCountValues();
 		}
 
 		/**
@@ -311,6 +335,7 @@
 		function onResetClickCallback( response ) {
 			$editorTextArea.val( '' );
 			currentPostData = getInitialCurrentPostData();
+			baseWordCount = 0;
 			onAutoSaveFinished( response )
 		}
 
@@ -353,6 +378,20 @@
 			autoSave = false;
 			clearTimeout( pressureTimeout );
 			$container.addClass( 'bash-it-out__complete' );
+			setTimeout( function() {
+				$happyEditorImage.show().delay( 3000 ).fadeOut( 2500 );
+			}, 0 );
+		}
+
+		/**
+		 * Fires when the user has previously reached the set word count but the word counts goes dooowwwn
+		 * @returns undefined
+		 */
+		function removeWordGoalCompleted() {
+			_bio.Countdown.start();
+			autoSave = true;
+			$container.removeClass( 'bash-it-out__complete' );
+			$happyEditorImage.hide();
 		}
 
 		/**
@@ -379,6 +418,7 @@
 				}
 			} else {
 				hasReachedWordGoal = false;
+				removeWordGoalCompleted();
 			}
 			return hasReachedWordGoal;
 		}
@@ -388,8 +428,6 @@
 		 * @returns undefined
 		 */
 		function startPressureTimer() {
-			// TODO: when $reminderTypeField.val() is up, start nagging by colour/image/sound;
-			// TODO: increment by fading in colour/image each second after half-way into the pressure time
 			clearTimeout( pressureTimeout );
 			pressureTimeout = setTimeout( function() {
 				// If there's no typin' there's no savin'
@@ -434,7 +472,7 @@
 						return log( 'Post could not be created', 'error' );
 					}
 					$lastAutoSave.html(
-						'<a href="' + response[ 0 ].link + '">' + response[ 0 ].title + '</a> saved.'
+						'<a href="' + response[ 0 ].link + '">Draft</a> saved.'
 					);
 					$savedPostsFieldset.removeClass( 'hidden' );
 					$savedPostsField.append( '<option value="' + response[ 0 ].id + '">' + response[ 0 ].title + '</option>' );
@@ -457,9 +495,7 @@
 						return log( 'Post could not be saved', 'error' );
 					}
 					$lastAutoSave.html(
-						'<a href="' + response[ 0 ].link + '">' +
-						response[ 0 ].title +
-						'</a> autosaved at: ' +
+						'<a href="' + response[ 0 ].link + '">Draft</a> autosaved at: ' +
 						new Date( response[ 0 ].modified ).toLocaleTimeString()
 					);
 				}
@@ -478,10 +514,11 @@
 				method: 'POST',
 				url: url,
 				data: data,
+				dataType: 'json',
 				beforeSend: function ( xhr ) {
 					xhr.setRequestHeader( 'X-WP-Nonce', _bio.nonce );
 				},
-				success : function( response ) {
+				success: function( response ) {
 					if ( ! response ) {
 						_bio.Countdown.stop();
 						//TODO: show error in UI
@@ -519,7 +556,7 @@
 		 * @returns {number} word count in editor textarea
 		 */
 		function triggerAutoSave() {
-			if ( isAdminPageActive() & currentPostData.id ) {
+			if ( isAdminPageActive() && currentPostData.id ) {
 				clearTimeout( autoSaveTimeout );
 				autoSaveTimeout = setTimeout( updatePost, AUTO_SAVE_INTERVAL );
 			}
@@ -574,20 +611,25 @@
 		/*
 			Init
 		 */
-		// TODO: Get info on saved posts to display in dropdown https://developer.wordpress.org/plugins/javascript/heartbeat-api/
-		// assign event handlers
-		if ( $settingsBoxStartButton.length ) {
+		function init() {
+			// Assign event handlers.
 			$settingsBoxStartButton.on( 'click', onStartButtonClick );
+			$settingsBoxLoadPostButton.on( 'click', onLoadPostClick );
+			$overseerQuitButton.on( 'click', onOverseerQuitClick );
+			$overseerPauseButton.on( 'click', onOverseerPauseClick );
+			$settingsBoxResetButton.on( 'click', onResetClick );
+			$settingsBoxSaveButton.on( 'click', onSaveNowClick );
+			$editorTextArea.on( 'keyup', onEditorTextAreaKeyUp );
+
+			// Set up the counter.
+			_bio.Countdown.init( onCountdownComplete, onCountdownTick );
+
+			// Load default post data.
+			currentPostData = getInitialCurrentPostData();
+			$currentPostTitle.text( currentPostData.title );
 		}
 
-		$settingsBoxLoadPostButton.on( 'click', onLoadPostClick );
-		$overseerQuitButton.on( 'click', onOverseerQuitClick );
-		$overseerPauseButton.on( 'click', onOverseerPauseClick );
-		$settingsBoxResetButton.on( 'click', onResetClick );
-		$settingsBoxSaveButton.on( 'click', onSaveNowClick );
-		$editorTextArea.on( 'keyup', onEditorTextAreaKeyUp );
-		_bio.Countdown.init( onCountdownComplete, onCountdownTick );
-		currentPostData = getInitialCurrentPostData();
-		$currentPostTitle.text( currentPostData.title );
+		init();
+
 	} );
 }( jQuery, window.bashItOut ) );

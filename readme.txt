@@ -8,7 +8,32 @@ Stable tag: 4.7
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
+== Description ==
 
-A WordPress plugin providing the slovenly with a countdown to pressure them into bashing out that word count.
+A simple WordPress plugin that provides the slovenly with the overbearing pressure they need to bash out that word count.
 
-Set a word goal, writing time, how often you want to be nagged and then **bash it out**!
+Set a word goal, writing time limit, how often you want to be nagged and then **bash it out**! Reach your word count goal before the count down! Impress your cat!
+
+== Installation ==
+
+1. Upload the `bash-it-out` directory to the `/wp-content/plugins/` directory
+1. Activate the plugin through the 'Plugins' menu in WordPress
+
+== Screenshots ==
+
+1. The annoying editor, who appears when you stop writing.
+2. The happy editor, who is happy when you reach your word count goals.
+3. The interface.
+
+== Frequently Asked Questions ==
+
+= What's the point of this plugin? =
+This plugin was a response to writer's block and laziness. Like me, some people need pressure to start writing. It doesn't matter what you write, the important thing is to start. Keep your inner editor in a cage and just bash at that word count!
+
+
+== Changelog ==
+= 1.0.0 =
+- Base functionality and illustrations
+- Create a new post when bashing one out
+- Load previously-saved posts
+- Client side countdown timer
