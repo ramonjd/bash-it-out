@@ -57,6 +57,7 @@
 		var $settingsBoxStartButton = $( '.bash-it-out__start' );
 		var $settingsBoxLoadPostButton = $( '.bash-it-out__load-post' );
 		var $settingsBoxResetButton = $( '.bash-it-out__reset' );
+		var $settingsBoxSaveButton = $( '.bash-it-out__save-now' );
 		var $writingTimeField = $( 'input[name="bash-it-out-writing-time"]' );
 		var $wordGoalField = $( 'input[name="bash-it-out-word-goal"]' );
 		var $reminderTypeField = $( 'select[name="bash-it-out-reminder-type"]' );
@@ -97,15 +98,14 @@
 				link: null,
 				content: null,
 				modified: null,
-				wordCount: null,
+				wordCount: null
 			};
 		}
 
 		/*
 			Event handlers
 		 */
-		function onStartButtonClick( event ) {
-			event.preventDefault();
+		function onStartButtonClick() {
 			$( 'html, body' ).animate( {
 				scrollTop: $editorTextAreaContainer.position().top
 			}, 800 );
@@ -163,6 +163,22 @@
 					$editorTextArea.val( currentPostData.content );
 					setWordCountValues();
 				} );
+		}
+
+		/**
+		 * Manual save event
+		 * @returns undefined
+		 */
+		function onSaveNowClick() {
+			cancelAutoSave();
+			if ( currentPostData.id ) {
+				toggleLoading();
+				updatePost()
+					.then( onAutoSaveFinished );
+			} else if ( $editorTextArea.val().length > 0 ) {
+				createNewPost()
+					.then( onAutoSaveFinished );
+			}
 		}
 
 		/**
@@ -273,11 +289,9 @@
 		/**
 		 * Sets a faded out message after reset save
 		 * @param {array} response posts api response
-		 * @param {string} actionText message to appear after title link
 		 * @returns undefined
 		 */
-		function onResetClickCallback( response ) {
-			$editorTextArea.val( '' );
+		function onAutoSaveFinished( response ) {
 			toggleLoading( false );
 			$resetAutoSave
 				.html( '<a href="' + response[ 0 ].link + '">' + response[ 0 ].title + '</a> saved.' )
@@ -286,8 +300,18 @@
 				.fadeOut( function(){
 					$resetAutoSave.html( '' );
 				} );
-			currentPostData = getInitialCurrentPostData();
 			setWordCountValues();
+		}
+
+		/**
+		 * Reset editor callback
+		 * @param {array} response posts api response
+		 * @returns undefined
+		 */
+		function onResetClickCallback( response ) {
+			$editorTextArea.val( '' );
+			currentPostData = getInitialCurrentPostData();
+			onAutoSaveFinished( response )
 		}
 
 		/**
@@ -560,6 +584,7 @@
 		$overseerQuitButton.on( 'click', onOverseerQuitClick );
 		$overseerPauseButton.on( 'click', onOverseerPauseClick );
 		$settingsBoxResetButton.on( 'click', onResetClick );
+		$settingsBoxSaveButton.on( 'click', onSaveNowClick );
 		$editorTextArea.on( 'keyup', onEditorTextAreaKeyUp );
 		_bio.Countdown.init( onCountdownComplete, onCountdownTick );
 		currentPostData = getInitialCurrentPostData();

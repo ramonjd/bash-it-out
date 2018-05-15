@@ -35,7 +35,7 @@
 .bash-it-out__settings fieldset {
 	display: block;
 	margin-bottom: 10px;
-	background-color: #eee;
+	border: 1px solid #bbb;
 	padding: 10px;
 }
 
@@ -82,6 +82,16 @@
 
 .bash-it-out__label-group {
 	display: inline-block;
+}
+
+.bash-it-out__fieldset-saved-post {
+	text-align: right;
+}
+
+.bash-it-out__fieldset-saved-posts .bash-it-out__load-post,
+.bash-it-out__fieldset-saved-posts select,
+.bash-it-out__fieldset-saved-posts {
+	font-size: 11px;
 }
 
 .bash-it-out__fieldset-saved-posts.hidden {

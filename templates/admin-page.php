@@ -26,7 +26,7 @@
 					<span class="bash-it-out__label-text">Type of reminder:</span>
 					<span class="bash-it-out__tooltip">
 						<span class="dashicons dashicons-editor-help"></span>
-						<dfn title="Type of reminder" class="bash-it-out__tooltip-content">Set the time before your editor reminds/nags you to keep bashing it out.</dfn title="Type of reminder">
+						<dfn title="Type of reminder" class="bash-it-out__tooltip-content">Set the time before your editor reminds/nags you to keep bashing it out.</dfn>
 					</span>
 				</span>
 				<select name="bash-it-out-reminder-type" id="bash-it-out-reminder-type">
@@ -40,11 +40,12 @@
 				<span class="dashicons dashicons-hammer"></span>
 			</button>
 		</fieldset>
-		<?php
-		if ( method_exists('Bash_It_Out\Plugin', 'get_saved_posts' ) ) {
-			$posts = Bash_It_Out\Plugin::get_saved_posts();
-			$has_posts = is_array( $posts ) && ! empty( $posts );
-			$container_class = $has_posts ? '' : 'hidden';
+	</div>
+	<?php
+	if ( method_exists('Bash_It_Out\Plugin', 'get_saved_posts' ) ) {
+		$posts = Bash_It_Out\Plugin::get_saved_posts();
+		$has_posts = is_array( $posts ) && ! empty( $posts );
+		$container_class = $has_posts ? '' : 'hidden';
 		?>
 		<fieldset class="bash-it-out__fieldset-saved-posts <?php echo $container_class; ?>">
 			<label class="bash-it-out__field-container" for="bash-it-out-saved-posts">
@@ -55,25 +56,17 @@
 						foreach( $posts as $post ) { ?>
 							<option value="<?php echo $post[ 'id' ]; ?>"><?php echo $post[ 'title' ]; ?></option>
 						<?php }
-						}
+					}
 					?>
 				</select>
 			</label>
-			<button type="button" class="bash-it-out__load-post button button-secondary button-small">
+			<button type="button" class="bash-it-out__load-post button button-secondary">
 				Load post into editor
 			</button>
 		</fieldset>
 		<?php
-		}
-		?>
-	</div>
-	<div class="bash-it-out__reset-container">
-		<button type="button" class="bash-it-out__reset button button-secondary button-small">
-			Reset everything
-		</button>
-		<span><strong>Warning!</strong> <em>This will save your work and clear the editor.</em></span>
-		<div class="bash-it-out__reset_autosave"></div>
-	</div>
+	}
+	?>
 
 	<div class="bash-it-out__editor-container">
 		<h3 class="bash-it-out__current-post-title"></h3>
@@ -126,6 +119,16 @@
 			</div>
 		</div>
 		<div class="bash-it-out__editors"><!--Editors go here--></div>
+	</div>
+
+	<div class="bash-it-out__reset-container">
+		<button type="button" class="bash-it-out__save-now button button-secondary button-small">
+			Save now
+		</button>
+		<button type="button" class="bash-it-out__reset button button-secondary button-small">
+			Reset everything (Saves your work and clears the editor)
+		</button>
+		<div class="bash-it-out__reset_autosave"></div>
 	</div>
 
 	<div class="bash-it-out__shadow-background"></div>
