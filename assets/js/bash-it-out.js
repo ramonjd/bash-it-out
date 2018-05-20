@@ -88,7 +88,7 @@
 
 		/**
 		 * Assigns new values to currentPostData
-		 * @param newState {object} new state values
+		 * @param {object} newState The new state values.
 		 * @returns {object}
 		 */
 		function setCurrentPostData( newState ) {
@@ -151,7 +151,7 @@
 		 * @returns undefined
 		 */
 		function onOverseerQuitClick() {
-			_bio.Countdown.stop();
+			_bio.Countdown.kill();
 			$container.attr('class', 'bash-it-out__container' );
 			$settingsBoxFields.attr( 'disabled', false );
 			autoSave = false;
@@ -163,6 +163,33 @@
 			setPostTitleAndWordCountValues();
 			clearTimeout( pressureTimeout );
 			$overseerPauseButtonText.text( 'Pause' );
+		}
+
+		/**
+		 * Event handler for Overseer pause button
+		 * @returns undefined
+		 */
+		function onOverseerPauseClick() {
+			pauseHandler( _bio.Countdown.toggle() );
+		}
+
+		/**
+		 * Handles the paused state
+		 * @param {bool} pausedState The paused state with which to set the UI.
+		 * @returns undefined
+		 */
+		function pauseHandler( pausedState ) {
+			if ( pausedState === true ) {
+				clearTimeout( pressureTimeout );
+				$overseerPauseButtonText.text( 'Resume' );
+				$container
+					.addClass( 'bash-it-out__paused' )
+					.removeClass( 'bash-it-out__annoy' );
+			} else {
+				$overseerPauseButtonText.text( 'Pause' );
+				$container.removeClass( 'bash-it-out__paused' );
+			}
+			focusEditor();
 		}
 
 		/**
@@ -218,25 +245,6 @@
 				$editorTextArea.val( '' );
 			}
 		}
-
-		/**
-		 * Event handler for Overseer pause button
-		 * @returns undefined
-		 */
-		function onOverseerPauseClick() {
-			var pausedState = _bio.Countdown.toggle();
-			if ( pausedState === true ) {
-				clearTimeout( pressureTimeout );
-				$overseerPauseButtonText.text( 'Resume' );
-				$container
-					.addClass( 'bash-it-out__paused' )
-					.removeClass( 'bash-it-out__annoy' );
-			} else {
-				$overseerPauseButtonText.text( 'Pause' );
-				$container.removeClass( 'bash-it-out__paused' );
-			}
-		}
-
 		/**
 		 * Callback method we pass to Countdown,
 		 * fires when countdown timer expires
@@ -255,7 +263,7 @@
 		 */
 		function onCountdownTick( counterValues ) {
 			if ( isAdminPageActive() ) {
-				$overseerTimeRemaining.text(counterValues.clock);
+				$overseerTimeRemaining.text( counterValues.clock );
 			}
 		}
 
@@ -374,7 +382,8 @@
 		 * @returns undefined
 		 */
 		function onWordGoalCompleted() {
-			_bio.Countdown.stop();
+			_bio.Countdown.pause();
+			pauseHandler( true );
 			autoSave = false;
 			clearTimeout( pressureTimeout );
 			$container.addClass( 'bash-it-out__complete' );
@@ -388,7 +397,10 @@
 		 * @returns undefined
 		 */
 		function removeWordGoalCompleted() {
-			_bio.Countdown.start();
+			if ( _bio.Countdown.isComplete() ) {
+				_bio.Countdown.start();
+				pauseHandler( false );
+			}
 			autoSave = true;
 			$container.removeClass( 'bash-it-out__complete' );
 			$happyEditorImage.hide();
@@ -520,7 +532,7 @@
 				},
 				success: function( response ) {
 					if ( ! response ) {
-						_bio.Countdown.stop();
+						_bio.Countdown.kill();
 						//TODO: show error in UI
 					}
 
@@ -540,7 +552,7 @@
 				error: function( error ) {
 					log( error, 'error' );
 					autoSave === false;
-					_bio.Countdown.stop();
+					_bio.Countdown.kill();
 					if ( $.type( callback ) === 'function' ) {
 						callback( error );
 					}
@@ -589,7 +601,7 @@
 			if ( $identifier.length < 1 ) {
 				// We're no longer on the page Toto
 				cancelAutoSave();
-				_bio.Countdown.stop();
+				_bio.Countdown.kill();
 				return false;
 			}
 			return true;

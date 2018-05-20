@@ -5,12 +5,13 @@
  * Achieve your word count goals with this pressure timer.
  *
  * @package Bash_It_Out
+ * @subpackage Bash_It_Out/includes
  * @since 1.0.0
  */
 
 namespace Bash_It_Out;
 
-if ( ! defined( 'ABSPATH' ) ) {
+if ( ! defined( 'WPINC' ) ) {
 	exit;
 }
 
@@ -19,6 +20,8 @@ if ( ! defined( 'ABSPATH' ) ) {
  * See: https://developer.wordpress.org/rest-api/extending-the-rest-api/
  *
  * @package Bash_It_Out
+ * @link    https://github.com/ramonjd/bash-it-out
+ * @subpackage Bash_It_Out/includes
  * @namespace Bash_It_Out
  */
 class Post_Routes extends \WP_REST_Controller {

@@ -3,6 +3,8 @@
  * Bash It Out
  *
  * @package     Bash_It_Out
+ * @link        https://github.com/ramonjd/bash-it-out
+ * @since       1.0.0
  *
  * @wordpress-plugin
  * Plugin Name: Bash it out
@@ -16,11 +18,11 @@
  * License URI: http://www.gnu.org/licenses/gpl-2.0.txt
  */
 
-if ( ! defined( 'ABSPATH' ) ) {
+if ( ! defined( 'WPINC' ) ) {
 	exit;
 }
 
-require_once plugin_dir_path( __FILE__ ) . '/class-plugin.php';
+require_once plugin_dir_path( __FILE__ ) . '/class-bash-it-out-plugin.php';
 
 add_action( 'plugins_loaded', array( 'Bash_It_Out\Plugin', 'init' ) );
 

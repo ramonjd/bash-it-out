@@ -9,7 +9,7 @@
 
 <div class="bash-it-out__container">
 	<aside class="bash-it-out__sidebar postbox">
-		<img class="bash-it-out__fist" src="<?php echo esc_attr( plugin_dir_url( __FILE__ ) . '../assets/images/bash-it-out.png' ); ?>" alt="<?php echo esc_attr( get_admin_page_title() ); ?>" />
+		<img class="bash-it-out__fist" src="<?php echo esc_attr( plugin_dir_url( __FILE__ ) . '../../assets/images/bash-it-out.png' ); ?>" alt="<?php echo esc_attr( get_admin_page_title() ); ?>" />
 		<h1>
 			<?php echo esc_html( get_admin_page_title() ); ?>
 		</h1>
@@ -100,8 +100,8 @@
 			);
 			wp_editor( $content, $editor_id, $settings );
 		?>
-		<img class="bash-it-out__annoying-editor" src="<?php echo esc_attr( plugin_dir_url( __FILE__ ) . '../assets/images/editor.png' ); ?>" alt="Editor says: You stopped writing!" />
-		<img class="bash-it-out__happy-editor" src="<?php echo esc_attr( plugin_dir_url( __FILE__ ) . '../assets/images/editor-complete.png' ); ?>" alt="Editor says: You finished your writing goals!" />
+		<img class="bash-it-out__annoying-editor" src="<?php echo esc_attr( plugin_dir_url( __FILE__ ) . '../../assets/images/editor.png' ); ?>" alt="Editor says: You stopped writing!" />
+		<img class="bash-it-out__happy-editor" src="<?php echo esc_attr( plugin_dir_url( __FILE__ ) . '../../assets/images/editor-complete.png' ); ?>" alt="Editor says: You finished your writing goals!" />
 		<div class="bash-it-out__reset-container">
 			<button type="button" class="bash-it-out__save-now button button-secondary button-small">
 				Save now

@@ -5,21 +5,24 @@
  * Achieve your word count goals with this pressure timer.
  *
  * @package Bash_It_Out
+ * @subpackage Bash_It_Out
  * @since 1.0.0
  */
 
 namespace Bash_It_Out;
 
-if ( ! defined( 'ABSPATH' ) ) {
+if ( ! defined( 'WPINC' ) ) {
 	exit;
 }
 
-require_once plugin_dir_path( __FILE__ ) . '/class-post-routes.php';
+require_once plugin_dir_path( __FILE__ ) . '/includes/class-bash-it-out-post-routes.php';
 
 /**
  * Plugin Class
  *
  * @package Bash_It_Out
+ * @link    https://github.com/ramonjd/bash-it-out
+ * @subpackage Bash_It_Out
  * @namespace Bash_It_Out
  */
 class Plugin {
@@ -135,7 +138,7 @@ class Plugin {
 	 * Render the admin page
 	 */
 	public function render_admin_page() {
-		include_once __DIR__ . '/templates/admin-page.php';
+		include_once __DIR__ . '/admin/templates/admin-page.php';
 	}
 
 	/**

@@ -4,75 +4,122 @@
 * */
 
 window.bashItOut = window.bashItOut || {};
-
 window.bashItOut.Countdown = ( function() {
-
-	/*
-	Countdown
-	1 min : 60s
-	30 min : 1800s
-	1 hour : 3600s
-*/
+	/**
+	 * Countdown class
+	 *
+	 * @namespace bashItOut
+	 * @returns { object } The class interface.
+	 */
 	function Countdown() {
-		var timerInterval = 1000;
+		/*
+			Constants
+		*/
+		var TIMER_INTERVAL = 1000;
+		// Duration is in seconds.
+		var DURATION = 1800;
+		// Clock face divider.
+		var DIVIDER = ':';
+		// Helper to calculate the Date from milliseconds.
+		var S = 1000;
+		var M = S * 60;
+		var H = M * 60;
+		var D = H * 24;
+
+		/*
+			Variables
+		*/
 		var complete = false;
-		// duration is in seconds
-		var duration = 1800;
 		var countdown = 0;
 		var clock = '00:00:00';
 		var end = '';
-		// in milliseconds
-		var s = 1000;
-		var m = s * 60;
-		var h = m * 60;
-		var d = h * 24;
 		var timer;
-		var divider = ':';
 		var now;
 		var distance;
 		var paused = true;
 		var onComplete = onTick = function(){};
 
+		/**
+		 * Sets up a new timer with user duration
+		 * @param {int} newDurationInMinutes
+		 * @returns undefined
+		 */
+		function set( newDurationInMinutes ) {
+			if ( newDurationInMinutes ) {
+				DURATION = newDurationInMinutes * 60;
+			}
+			// set out seconds countdown to track seconds
+			// let's add one second to account for the first setInterval delay
+			countdown = DURATION + 1;
+
+			var durationInMilliseconds = DURATION * 1000;
+
+			clock = [
+				pad( Math.floor( ( durationInMilliseconds % D ) / H ) ),
+				pad( Math.floor( ( durationInMilliseconds % H ) / M ) ),
+				pad( Math.floor( ( durationInMilliseconds % M ) / S ) )
+			].join( DIVIDER );
+		}
+
+		/**
+		 * Starts the timer
+		 * @returns undefined
+		 */
+		function start() {
+			end = new Date();
+			// add selected seconds to current time
+			end.setSeconds( end.getSeconds() + countdown );
+			if ( timer ) {
+				clearTheTimer();
+			}
+			timer = setInterval( render, TIMER_INTERVAL );
+			paused = false;
+			complete = false;
+		}
+
+		/**
+		 * Resets vars and clock face
+		 * @returns undefined
+		 */
 		function reset() {
 			clock = '00:00:00';
-			stop();
+			kill();
+			paused = true;
+			complete = false;
 			return clock;
 		}
 
+		/**
+		 * Util function to pad numbers with zero
+		 * @returns {string|int}
+		 */
 		function pad( n ) {
 			n = parseInt( n, null );
 			return ( n < 10 && n >= 0 ) ? ( '0' + n ) : n;
 		}
 
-		function getCompletedTimePercentage( current, duration ) {
+		/**
+		 * Gets the percentage of time complete in relation to the duration
+		 * @returns {int}
+		 */
+		function getCompletedTimePercentage( current, DURATION ) {
 			var seconds = current / 1000;
-			return 100 - Math.floor( seconds / duration * 100 );
+			return 100 - Math.floor( seconds / DURATION * 100 );
 		}
 
-		function set( newDurationInMinutes ) {
-			if ( newDurationInMinutes ) {
-				duration = newDurationInMinutes * 60;
-			}
-			// set out seconds countdown to track seconds
-			// let's add one second to account for the first setInterval delay
-			countdown = duration + 1;
-
-			var durationInMilliseconds = duration * 1000;
-			clock = [
-				pad( Math.floor( ( durationInMilliseconds % d ) / h ) ),
-				pad( Math.floor( ( durationInMilliseconds % h ) / m ) ),
-				pad( Math.floor( ( durationInMilliseconds % m ) / s ) )
-			].join( divider );
+		/**
+		 * Clears the interval
+		 * @returns undefined
+		 */
+		function clearTheTimer() {
+			clearInterval( timer );
+			timer = null;
 		}
 
-		function start() {
-			end = new Date();
-			// add selected seconds to current time
-			end.setSeconds( end.getSeconds() + countdown );
-			timer = setInterval( render, timerInterval );
-			paused = false;
-		}
-
+		/**
+		 * Render function that puts together the clock face every interval tick
+		 * @returns undefined
+		 */
 		function render() {
 			now = new Date();
 			distance = end.getTime() - now.getTime();
@@ -83,36 +130,47 @@ window.bashItOut.Countdown = ( function() {
 				return false;
 			}
 
-			// key
-			// day =  Math.floor(distance / d);
-			// hour = Math.floor((distance % d) / h);
-			// min = Math.floor((distance % h) / m);
-			// sec = Math.floor((distance % m) / s);
 			clock = [
-				pad( Math.floor( ( distance % d ) / h ) ),
-				pad( Math.floor( ( distance % h ) / m ) ),
-				pad( Math.floor( ( distance % m ) / s ) )
-			].join( divider );
+				// The day in hours.
+				pad( Math.floor( ( distance % D ) / H ) ),
+				// The hours in minutes
+				pad( Math.floor( ( distance % H ) / M ) ),
+				// The minutes in seconds.
+				pad( Math.floor( ( distance % M ) / S ) )
+			].join( DIVIDER );
 
 			countdown--;
 
 			onTick && onTick( {
 				clock: clock,
-				percentage: getCompletedTimePercentage( distance, duration )
+				percentage: getCompletedTimePercentage( distance, DURATION )
 			} );
 		}
 
+		/**
+		 * Pauses the clock
+		 * @returns undefined
+		 */
 		function pause() {
-			clearInterval( timer );
+			clearTheTimer();
 			paused = true;
 		}
 
-		function stop() {
+		/**
+		 * Kills the clock by calling it completed
+		 * @returns undefined
+		 */
+		function kill() {
 			complete = true;
-			clearInterval( timer );
-			paused === true;
+			paused = true;
+			clearTheTimer();
 		}
 
+		/**
+		 * Toggles pause and returns whether the clock is paused
+		 *
+		 * @returns {bool}
+		 */
 		function toggle() {
 			if ( paused === true ) {
 				start();
@@ -122,6 +180,10 @@ window.bashItOut.Countdown = ( function() {
 			return paused;
 		}
 
+		/**
+		 * Sets up a new clock
+		 * @returns undefined
+		 */
 		function init( onCompleteCallback, onTickCallback ) {
 			onComplete = onCompleteCallback;
 			onTick = onTickCallback;
@@ -131,7 +193,7 @@ window.bashItOut.Countdown = ( function() {
 			init: init,
 			start: start,
 			pause: pause,
-			stop: stop,
+			kill: kill,
 			toggle: toggle,
 			set: set,
 			reset: reset,
@@ -140,6 +202,9 @@ window.bashItOut.Countdown = ( function() {
 			},
 			isPaused: function() {
 				return paused;
+			},
+			isComplete: function() {
+				return complete;
 			}
 		};
 	}
