@@ -171,6 +171,7 @@
 		 */
 		function onOverseerPauseClick() {
 			pauseHandler( _bio.Countdown.toggle() );
+			focusEditor();
 		}
 
 		/**
@@ -189,7 +190,6 @@
 				$overseerPauseButtonText.text( 'Pause' );
 				$container.removeClass( 'bash-it-out__paused' );
 			}
-			focusEditor();
 		}
 
 		/**

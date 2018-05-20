@@ -20,6 +20,7 @@ Your work is auto-saved to draft posts, which you can come back and keep bashing
 
 ## TODO
 
-- [ ] Add art to complete functionality
+- [ ] Save settings in options
+- [ ] Add different styles of pressure (various art, sounds?)
 - [ ] Add unit tests?
 

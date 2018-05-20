@@ -136,7 +136,6 @@
 					<button type="button" class="bash-it-out__overseer-quit button button-primary button-large">Quit</button>
 				</div>
 			</div>
-			<div class="bash-it-out__editors"><!--Editors go here--></div>
 		</div>
 	</main>
 	<div class="bash-it-out__shadow-background"></div>

@@ -17,7 +17,7 @@ Set a word goal, writing time limit, how often you want to be nagged and then **
 == Installation ==
 
 1. Upload the `bash-it-out` directory to the `/wp-content/plugins/` directory
-1. Activate the plugin through the 'Plugins' menu in WordPress
+2. Activate the plugin through the 'Plugins' menu in WordPress
 
 == Screenshots ==
 
