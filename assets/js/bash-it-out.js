@@ -197,6 +197,8 @@
 		 * @returns undefined
 		 */
 		function onLoadPostClick() {
+			// Stop any save timers from previous posts.
+			cancelAutoSave();
 			var postId = parseInt( $savedPostsField.val() );
 			if ( currentPostData.id === postId ) {
 				log( 'This post is already loaded', 'warn' );
@@ -217,7 +219,6 @@
 		 * @returns undefined
 		 */
 		function onSaveNowClick() {
-			cancelAutoSave();
 			if ( currentPostData.id ) {
 				toggleLoading();
 				updatePost()
@@ -273,19 +274,20 @@
 		 */
 		function onEditorTextAreaKeyUp() {
 			setPostTitleAndWordCountValues();
+
 			// TODO: easter egg track key strokes
 			clearTimeout( pressureTimeout );
 			$container.removeClass( 'bash-it-out__annoy' );
 
-			// TODO: start the pressure time immediately after a resume, but not before
-			// the user has started writing for the first time.
+			// The user has kicked off a bash it out session,
+			// so let's start the timer.
 			if ( ! _bio.Countdown.isPaused() && ! hasReachedWordGoal && isInWritingMode() ) {
 				startPressureTimer();
 			}
 
-			if ( ! autoSave && currentPostData.id ) {
+			if ( ! autoSave ) {
 				autoSave = true;
-				updatePost();
+				onSaveNowClick();
 			}
 		}
 
@@ -384,7 +386,6 @@
 		function onWordGoalCompleted() {
 			_bio.Countdown.pause();
 			pauseHandler( true );
-			autoSave = false;
 			clearTimeout( pressureTimeout );
 			$container.addClass( 'bash-it-out__complete' );
 			setTimeout( function() {
@@ -423,7 +424,12 @@
 		 * @returns {boolean} whether the word count as been reached
 		 */
 		function checkStatusWordCountStatus ( currentWordCount ) {
-			if ( currentWordCount >= wordCountGoal && isInWritingMode() ) {
+			// We only check when writing mode, a.k.a pressure mode, is on.
+			if ( ! isInWritingMode() ) {
+				return false;
+			}
+
+			if ( currentWordCount >= wordCountGoal ) {
 				if ( hasReachedWordGoal === false ) {
 					hasReachedWordGoal = true;
 					onWordGoalCompleted();
@@ -442,10 +448,6 @@
 		function startPressureTimer() {
 			clearTimeout( pressureTimeout );
 			pressureTimeout = setTimeout( function() {
-				// If there's no typin' there's no savin'
-				if ( autoSave ) {
-					autoSave = false;
-				}
 				$container.addClass( 'bash-it-out__annoy' );
 			}, $reminderTypeField.val() );
 		}
@@ -551,7 +553,7 @@
 				},
 				error: function( error ) {
 					log( error, 'error' );
-					autoSave === false;
+					autoSave = false;
 					_bio.Countdown.kill();
 					if ( $.type( callback ) === 'function' ) {
 						callback( error );
@@ -580,7 +582,7 @@
 		 */
 		function cancelAutoSave() {
 			clearTimeout( autoSaveTimeout );
-			autoSave === false;
+			autoSave = false;
 			autoSaveTimeout = null;
 		}
 
@@ -599,7 +601,7 @@
 		function isAdminPageActive() {
 			var $identifier = $( '#bash-it-out-identifier' );
 			if ( $identifier.length < 1 ) {
-				// We're no longer on the page Toto
+				// We're no longer on the page Toto.
 				cancelAutoSave();
 				_bio.Countdown.kill();
 				return false;

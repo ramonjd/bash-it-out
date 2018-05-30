@@ -32,7 +32,7 @@ class Post_Routes extends \WP_REST_Controller {
 	const REST_BASE      = 'posts';
 
 	/**
-	 * Category_List_Rest constructor.
+	 * Class constructor.
 	 *
 	 * @param {string} $plugin_name name of plugin.
 	 */
