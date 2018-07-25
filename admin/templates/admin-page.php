@@ -122,7 +122,12 @@
 					<time class="bash-it-out__time-remaining">--:--:--</time>
 				</div>
 				<div class="bash-it-out__overseer-column">
-					<h3>Word count</h3>
+					<h3>Words
+						<span class="bash-it-out__tooltip">
+							<span class="dashicons dashicons-editor-help"></span>
+							<dfn title="Word goal" class="bash-it-out__tooltip-content">Represents the word count goal for this session, minus any already-saved words</dfn>
+						</span>
+					</h3>
 					<output class="bash-it-out__words-remaining">-</output>
 				</div>
 				<div class="bash-it-out__overseer-column">
