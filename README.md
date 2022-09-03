@@ -1,6 +1,6 @@
 # Bash It Out
 
-Version _1.0.0_
+Version _1.0.1_
 
 A simple WordPress plugin that provides the slovenly with the overbearing pressure they need to bash out that word count.
 
