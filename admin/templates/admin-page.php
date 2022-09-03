@@ -13,8 +13,14 @@
 		<h1>
 			<?php echo esc_html( get_admin_page_title() ); ?>
 		</h1>
+		<?php
+		    $bash_it_out_tag_html = '<strong>' . esc_html( get_admin_page_title() ) . '</strong>';
+		    if ( method_exists( 'Bash_It_Out\Plugin', 'get_tag_info' ) ) {
+				$bash_it_out_tag_html = '<a href="' . esc_html( Bash_It_Out\Plugin::get_tag_info()['link'] ) . '">' . $bash_it_out_tag_html . '</a>';
+			}
+		?>
 		<p> Can't reach your word count goals? Does writer's block have its craggy hand around the throat of your creativity? Sometimes just bashing something out is the answer. Set your word count goal below, along with a time limit and let your fingers fly. Your editor will remind you should you falter. Happy writing!</p>
-		<p>Every time you bash one out, it creates a new draft post with the tag <a href="<?php echo esc_html( Bash_It_Out\Plugin::get_tag_info()['link'] ); ?>"><strong><?php echo esc_html( get_admin_page_title() ); ?></strong></a>. Your work will be autosaved every 10 seconds.</p>
+		<p>Every time you bash one out, it creates a new draft post with the tag <?php echo $bash_it_out_tag_html ?>. Your work will be autosaved every 10 seconds.</p>
 		<fieldset class="bash-it-out__settings">
 			<label class="bash-it-out__field-container" for="bash-it-out-writing-time">
 				<span class="bash-it-out__label-text bash-it-out__label-group">Writing time (mins)</span>
@@ -146,5 +152,3 @@
 	<div class="bash-it-out__shadow-background"></div>
 	<input type="hidden" id="bash-it-out-identifier" name="bash-it-out-identifier" value="<?php echo esc_attr( get_admin_page_title() ); ?>" />
 </div>
-
-
