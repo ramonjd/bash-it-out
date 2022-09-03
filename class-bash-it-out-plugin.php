@@ -29,7 +29,7 @@ class Plugin {
 	/**
 	 * Constants
 	 */
-	const PLUGIN_VERSION = '1.0.0';
+	const PLUGIN_VERSION = '1.0.1';
 	const MIN_WP_VERSION = '4.7';
 	// Also the tag label.
 	const PLUGIN_NAME      = 'Bash It Out';
